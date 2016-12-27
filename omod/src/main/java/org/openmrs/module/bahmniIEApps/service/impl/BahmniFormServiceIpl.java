@@ -1,6 +1,7 @@
 package org.openmrs.module.bahmniIEApps.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.api.APIException;
@@ -15,8 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -69,12 +72,27 @@ public class BahmniFormServiceIpl implements BahmniFormService {
     }
 
     private List<BahmniForm> getLatestFormByVersion(List<Form> forms) {
-        Set<String> bahmniFormNames = new HashSet<>();
+        Map<String, Form> bahmniFormMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(forms)) {
+            for (Form form : forms) {
+                String formName = form.getName();
+                if (bahmniFormMap.containsKey(formName)) {
+                    if (Integer.parseInt(form.getVersion()) > Integer.parseInt(bahmniFormMap.get(formName).getVersion())) {
+                        bahmniFormMap.put(formName, form);
+                    }
+                } else {
+                    bahmniFormMap.put(formName, form);
+                }
+            }
+        }
+        return map(bahmniFormMap);
+    }
+
+    private List<BahmniForm> map(Map<String, Form> forDetailsMap) {
         List<BahmniForm> bahmniForms = new ArrayList<>();
         BahmniFormMapper mapper = new BahmniFormMapper();
-        for(Form form : forms) {
-            if (!bahmniFormNames.contains(form.getName())) {
-                bahmniFormNames.add(form.getName());
+        if(MapUtils.isNotEmpty(forDetailsMap)) {
+            for(Form form : forDetailsMap.values()) {
                 bahmniForms.add(mapper.map(form));
             }
         }
@@ -122,11 +140,19 @@ public class BahmniFormServiceIpl implements BahmniFormService {
     }
 
     private String incrementVersion(String formName) {
-        Form form = formService.getForm(formName);
-        if(null != form) {
-            Float version = Float.parseFloat(form.getVersion());
+        List<Form> forms = bahmniFormDao.getAllForms(formName, false, true);
+        float version = 0f;
+        if(CollectionUtils.isNotEmpty(forms)) {
+            for(Form form : forms) {
+                float formVersion = Float.parseFloat(form.getVersion());
+                if(formVersion > version) {
+                    version = formVersion;
+                }
+            }
+        }
+        if(version > 0f) {
             version++;
-            return version.toString();
+            return String.valueOf((int)version);
         }
         return DEFAULT_VERSION;
     }

@@ -1,5 +1,6 @@
 package org.openmrs.module.bahmniIEApps.dao.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
@@ -21,6 +22,7 @@ public class BahmniFormDaoImpl implements BahmniFormDao{
         this.sessionFactory = sessionFactory;
     }
 
+    @Override
     public List<Form> getDraftFormByName(String name) throws DAOException {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Form.class);
         criteria.add(Restrictions.eq("name", name));
@@ -32,11 +34,21 @@ public class BahmniFormDaoImpl implements BahmniFormDao{
 
     @Override
     public List<Form> getAllPublishedForms(boolean includeRetired) throws DAOException {
+        return getAllForms(null, includeRetired, false);
+    }
+
+    @Override
+    public List<Form> getAllForms(String formName, boolean includeRetired, boolean includeDraftState) throws DAOException {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Form.class);
+        if(StringUtils.isNotEmpty(formName)) {
+            criteria.add(Restrictions.eq("name", formName));
+        }
         if(!includeRetired) {
             criteria.add(Restrictions.eq("retired", Boolean.valueOf(false)));
         }
-        criteria.add(Restrictions.eq("published", Boolean.valueOf(true)));
+        if(!includeDraftState) {
+            criteria.add(Restrictions.eq("published", Boolean.valueOf(true)));
+        }
         criteria.addOrder(Order.desc("name"));
         criteria.addOrder(Order.desc("version"));
         return criteria.list();
