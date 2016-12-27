@@ -8,5 +8,5 @@ import java.util.List;
 public interface BahmniFormService {
     BahmniFormResource saveFormResource(BahmniFormResource bahmniFormResource);
     BahmniForm publish(String formUuid);
-    List<BahmniForm> getAllForms(boolean includeRetired);
+    List<BahmniForm> getAllLatestPublishedForms(boolean includeRetired);
 }

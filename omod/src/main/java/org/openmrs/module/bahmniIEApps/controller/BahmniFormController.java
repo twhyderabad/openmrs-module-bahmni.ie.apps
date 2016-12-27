@@ -41,6 +41,6 @@ public class BahmniFormController extends BaseRestController {
     @RequestMapping(value = baseUrl + "/latestPublishedForms", method = RequestMethod.GET )
     @ResponseBody
     public List<BahmniForm> getLatestPublishedForms(@RequestParam(value = "includeRetired", required = false) boolean includeRetired) {
-        return bahmniFormService.getAllForms(includeRetired);
+        return bahmniFormService.getAllLatestPublishedForms(includeRetired);
     }
 }

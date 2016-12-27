@@ -17,10 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 public class BahmniFormServiceIpl implements BahmniFormService {
@@ -66,7 +64,7 @@ public class BahmniFormServiceIpl implements BahmniFormService {
     }
 
     @Override
-    public List<BahmniForm> getAllForms(boolean includeRetired) {
+    public List<BahmniForm> getAllLatestPublishedForms(boolean includeRetired) {
         List<Form> forms = bahmniFormDao.getAllPublishedForms(includeRetired);
         return getLatestFormByVersion(forms);
     }
