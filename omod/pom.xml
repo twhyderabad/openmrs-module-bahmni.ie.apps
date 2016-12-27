@@ -8,6 +8,10 @@
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 
+	<properties>
+		<openMRSWebServicesVersion>2.16</openMRSWebServicesVersion>
+	</properties>
+
 	<artifactId>bahmniIEApps-omod</artifactId>
 	<packaging>jar</packaging>
 	<name>bahmniIEApps Module OMOD</name>
