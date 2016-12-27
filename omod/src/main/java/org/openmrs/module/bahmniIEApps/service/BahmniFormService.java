@@ -1,10 +1,12 @@
 package org.openmrs.module.bahmniIEApps.service;
 
-import org.openmrs.Form;
-import org.openmrs.FormResource;
+import org.openmrs.module.bahmniIEApps.model.BahmniForm;
 import org.openmrs.module.bahmniIEApps.model.BahmniFormResource;
 
+import java.util.List;
+
 public interface BahmniFormService {
-    FormResource saveFormResource(BahmniFormResource bahmniFormResource);
-    Form publish(String formUuid);
+    BahmniFormResource saveFormResource(BahmniFormResource bahmniFormResource);
+    BahmniForm publish(String formUuid);
+    List<BahmniForm> getAllForms(boolean includeRetired);
 }

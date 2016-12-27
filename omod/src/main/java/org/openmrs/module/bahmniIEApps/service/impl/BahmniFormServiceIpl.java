@@ -6,20 +6,25 @@ import org.openmrs.FormResource;
 import org.openmrs.api.APIException;
 import org.openmrs.api.FormService;
 import org.openmrs.module.bahmniIEApps.dao.BahmniFormDao;
+import org.openmrs.module.bahmniIEApps.mapper.BahmniFormMapper;
+import org.openmrs.module.bahmniIEApps.model.BahmniForm;
 import org.openmrs.module.bahmniIEApps.model.BahmniFormResource;
 import org.openmrs.module.bahmniIEApps.service.BahmniFormService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class BahmniFormServiceIpl implements BahmniFormService {
     private FormService formService;
     private BahmniFormDao bahmniFormDao;
-    private final String DEFAULT_VERSION = "1.0";
-    private final String MULTIPLE_DRAFT_EXCEPTION = "Form cannot have more than one draft.";
+    private final String DEFAULT_VERSION = "1";
+    private final String MULTIPLE_DRAFT_EXCEPTION = "Form cannot have more than one drafts.";
 
     @Autowired
     public BahmniFormServiceIpl(FormService formService, BahmniFormDao bahmniFormDao) {
@@ -29,11 +34,10 @@ public class BahmniFormServiceIpl implements BahmniFormService {
 
     @Override
     @Transactional
-    public FormResource saveFormResource(BahmniFormResource bahmniFormResource) {
-        Form form = formService.getFormByUuid(bahmniFormResource.getForm().getFormUuid());
-        FormResource formResource = getFormResource(bahmniFormResource.getFormResourceUuid());
+    public BahmniFormResource saveFormResource(BahmniFormResource bahmniFormResource) {
+        Form form = formService.getFormByUuid(bahmniFormResource.getForm().getUuid());
+        FormResource formResource = getFormResource(bahmniFormResource.getUuid());
         if(form.getPublished()) {
-//            validateForMultileDraft(form.getName());
             form = cloneForm(form);
             form.setVersion(incrementVersion(form.getName()));
             formService.saveForm(form);
@@ -41,21 +45,40 @@ public class BahmniFormServiceIpl implements BahmniFormService {
             formResource = cloneFormResource(formResource);
         }
         formResource.setForm(form);
-        formResource.setName(bahmniFormResource.getName());
+        formResource.setName(bahmniFormResource.getForm().getName());
         formResource.setDatatypeClassname(bahmniFormResource.getDataType());
         formResource.setValueReferenceInternal(bahmniFormResource.getValueReference());
-        formService.saveFormResource(formResource);
-        return formResource;
+        formResource = formService.saveFormResource(formResource);
+        return new BahmniFormMapper().map(formResource);
     }
 
     @Override
-    public Form publish(String formUuid) {
+    public BahmniForm publish(String formUuid) {
         Form form = formService.getFormByUuid(formUuid);
         if (form != null) {
             form.setPublished(Boolean.TRUE);
             formService.saveForm(form);
         }
-        return form;
+        return new BahmniFormMapper().map(form);
+    }
+
+    @Override
+    public List<BahmniForm> getAllForms(boolean includeRetired) {
+        List<Form> forms = bahmniFormDao.getAllPublishedForms(includeRetired);
+        return getLatestFormByVersion(forms);
+    }
+
+    private List<BahmniForm> getLatestFormByVersion(List<Form> forms) {
+        Set<String> bahmniFormNames = new HashSet<>();
+        List<BahmniForm> bahmniForms = new ArrayList<>();
+        BahmniFormMapper mapper = new BahmniFormMapper();
+        for(Form form : forms) {
+            if (!bahmniFormNames.contains(form.getName())) {
+                bahmniFormNames.add(form.getName());
+                bahmniForms.add(mapper.map(form));
+            }
+        }
+        return bahmniForms;
     }
 
     private FormResource getFormResource(String formResourceUuid) {
@@ -87,9 +110,13 @@ public class BahmniFormServiceIpl implements BahmniFormService {
         return clonedFormResource;
     }
 
-    private void validateForMultileDraft(String formName) {
+    /**
+     * This will throw APIException.class exception if there is more than one draft version.
+     * @param formName
+     */
+    private void validateForMultipleDraft(String formName) {
         List<Form> forms = bahmniFormDao.getDraftFormByName(formName);
-        if(CollectionUtils.isNotEmpty(forms)) {
+        if(CollectionUtils.isNotEmpty(forms) && forms.size() > 1) {
             throw new APIException(MULTIPLE_DRAFT_EXCEPTION);
         }
     }

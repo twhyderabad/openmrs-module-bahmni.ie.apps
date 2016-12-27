@@ -1,8 +1,6 @@
 package org.openmrs.module.bahmniIEApps.controller;
 
-import org.openmrs.Form;
-import org.openmrs.FormResource;
-import org.openmrs.api.context.Context;
+import org.openmrs.module.bahmniIEApps.model.BahmniForm;
 import org.openmrs.module.bahmniIEApps.model.BahmniFormResource;
 import org.openmrs.module.bahmniIEApps.service.BahmniFormService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
@@ -15,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.List;
+
 @Controller
 public class BahmniFormController extends BaseRestController {
     private final String baseUrl = "/rest/" + RestConstants.VERSION_1 + "/bahmniIE";
@@ -26,15 +26,21 @@ public class BahmniFormController extends BaseRestController {
         this.bahmniFormService = bahmniFormService;
     }
 
-    @RequestMapping(value = baseUrl + "/publish", method = RequestMethod.GET )
+    @RequestMapping(value = baseUrl + "/publish", method = RequestMethod.POST )
     @ResponseBody
-    public Form publish(@RequestParam("formUuid") String formUuid) {
+    public BahmniForm publish(@RequestParam("formUuid") String formUuid) {
         return bahmniFormService.publish(formUuid);
     }
 
     @RequestMapping(value = baseUrl + "/save", method = RequestMethod.POST )
-//    @ResponseBody
-    public void save(@RequestBody BahmniFormResource bahmniFormResource) {
-        bahmniFormService.saveFormResource(bahmniFormResource);
+    @ResponseBody
+    public BahmniFormResource save(@RequestBody BahmniFormResource bahmniFormResource) {
+        return bahmniFormService.saveFormResource(bahmniFormResource);
+    }
+
+    @RequestMapping(value = baseUrl + "/latestPublishedForms", method = RequestMethod.GET )
+    @ResponseBody
+    public List<BahmniForm> getLatestPublishedForms(@RequestParam(value = "includeRetired", required = false) boolean includeRetired) {
+        return bahmniFormService.getAllForms(includeRetired);
     }
 }

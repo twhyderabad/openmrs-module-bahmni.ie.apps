@@ -22,10 +22,22 @@ public class BahmniFormDaoImpl implements BahmniFormDao{
     }
 
     public List<Form> getDraftFormByName(String name) throws DAOException {
-        Criteria criteria = this.sessionFactory.getCurrentSession().createCriteria(Form.class);
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Form.class);
         criteria.add(Restrictions.eq("name", name));
         criteria.add(Restrictions.eq("retired", Boolean.valueOf(false)));
         criteria.add(Restrictions.eq("published", Boolean.valueOf(false)));
+        criteria.addOrder(Order.desc("version"));
+        return criteria.list();
+    }
+
+    @Override
+    public List<Form> getAllPublishedForms(boolean includeRetired) throws DAOException {
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Form.class);
+        if(!includeRetired) {
+            criteria.add(Restrictions.eq("retired", Boolean.valueOf(false)));
+        }
+        criteria.add(Restrictions.eq("published", Boolean.valueOf(true)));
+        criteria.addOrder(Order.desc("name"));
         criteria.addOrder(Order.desc("version"));
         return criteria.list();
     }

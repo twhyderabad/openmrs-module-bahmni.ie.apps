@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface BahmniFormDao {
     List<Form> getDraftFormByName(String name) throws DAOException;
+    List<Form> getAllPublishedForms(boolean includeRetired) throws DAOException;
 }

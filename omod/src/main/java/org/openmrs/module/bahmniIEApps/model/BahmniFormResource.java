@@ -1,25 +1,10 @@
 package org.openmrs.module.bahmniIEApps.model;
 
-import java.io.Serializable;
-
-public class BahmniFormResource implements Serializable {
+public class BahmniFormResource{
     private BahmniForm form;
-    private String formResourceUuid;
+    private String uuid;
     private String dataType;
-    private String name;
     private String valueReference;
-
-    public class BahmniForm {
-        private String formUuid;
-
-        public String getFormUuid() {
-            return formUuid;
-        }
-
-        public void setFormUuid(String formUuid) {
-            this.formUuid = formUuid;
-        }
-    }
 
     public BahmniForm getForm() {
         return form;
@@ -29,12 +14,12 @@ public class BahmniFormResource implements Serializable {
         this.form = form;
     }
 
-    public String getFormResourceUuid() {
-        return formResourceUuid;
+    public String getUuid() {
+        return uuid;
     }
 
-    public void setFormResourceUuid(String formResourceUuid) {
-        this.formResourceUuid = formResourceUuid;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getDataType() {
@@ -43,14 +28,6 @@ public class BahmniFormResource implements Serializable {
 
     public void setDataType(String dataType) {
         this.dataType = dataType;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getValueReference() {
