@@ -37,6 +37,14 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<distributionManagement>
+		<snapshotRepository>
+			<id>repo.mybahmni.org</id>
+			<name>bahmni-artifactory-snapshots</name>
+			<url>s3://repo.mybahmni.org/artifactory/snapshot</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 	<dependencyManagement>
 		<dependencies>
 		
@@ -123,6 +131,13 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
+		<extensions>
+			<extension>
+				<groupId>org.kuali.maven.wagons</groupId>
+				<artifactId>maven-s3-wagon</artifactId>
+				<version>1.2.1</version>
+			</extension>
+		</extensions>
 	</build>
 
 	<repositories>
@@ -130,6 +145,19 @@
 			<id>openmrs-repo</id>
 			<name>OpenMRS Nexus Repository</name>
 			<url>http://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
+		</repository>
+		<repository>
+			<id>repo.mybahmni.org</id>
+			<name>bahmni-artifactory-snapshots</name>
+			<url>http://repo.mybahmni.org.s3.amazonaws.com/artifactory/snapshot</url>
+			<snapshots>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>repo.mybahmni.org-release</id>
+			<name>bahmni-artifactory-release</name>
+			<url>http://repo.mybahmni.org.s3.amazonaws.com/artifactory/release</url>
 		</repository>
 	</repositories>
 
