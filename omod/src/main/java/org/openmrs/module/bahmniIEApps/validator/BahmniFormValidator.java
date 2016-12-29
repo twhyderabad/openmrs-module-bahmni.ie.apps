@@ -25,7 +25,8 @@ public class BahmniFormValidator implements Validator {
                 .filter(f -> {
                     boolean sameVersion = f.getVersion().equals(form.getVersion());
                     boolean sameName = f.getName().equals(form.getName());
-                    return sameName && sameVersion;
+                    boolean hasId = form.getId() != null;
+                    return sameName && sameVersion && !hasId;
                 }).collect(Collectors.toList());
         if (!filteredForms.isEmpty()) {
             errors.reject("Form with same name and version already exists");

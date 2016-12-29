@@ -250,7 +250,7 @@ public class BahmniFormServiceImplTest {
     }
 
     @Test
-    public void shouldReturnApproppriatePublishedForms() {
+    public void shouldReturnAppropriatePublishedForms() {
         Form form1 = MotherForm.createForm("FormName1", "FormUuid1", "1", true);
         Form form2 = MotherForm.createForm("FormName2", "FormUuid2", "1", true);
         Form form3 = MotherForm.createForm("FormName1", "FormUuid1", "2", true);

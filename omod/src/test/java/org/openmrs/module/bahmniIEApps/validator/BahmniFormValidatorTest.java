@@ -23,7 +23,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Context.class)
-public class FormValidatorTest {
+public class BahmniFormValidatorTest {
 
     @Mock
     private FormService formService;
@@ -32,20 +32,21 @@ public class FormValidatorTest {
     public void setUp() {
         mockStatic(Context.class);
         PowerMockito.when(Context.getFormService()).thenReturn(formService);
-        List<Form> forms = Arrays.asList(getForm("form1", "1"), getForm("form2", "1"));
+        List<Form> forms = Arrays.asList(getForm("form1", "1", 1), getForm("form2", "1", 2));
         PowerMockito.when(formService.getAllForms(false)).thenReturn(forms);
     }
 
-    private Form getForm(String name, String version) {
+    private Form getForm(String name, String version, Integer id) {
         Form form = new Form();
         form.setName(name);
         form.setVersion(version);
+        form.setId(id);
         return form;
     }
 
     @Test
     public void shouldRejectIfFormWithSameNameAndVersionAlreadyExists() throws Exception {
-        Form form = getForm("form1", "1");
+        Form form = getForm("form1", "1", null);
 
         Errors errors = new BindException(form, "form");
         new BahmniFormValidator().validate(form, errors);
@@ -58,11 +59,22 @@ public class FormValidatorTest {
 
     @Test
     public void shouldNotRejectIfFormNameAndVersionDoNoExist() throws Exception {
-        Form form = getForm("form3", "1");
+        Form form = getForm("form3", "1", null);
 
         Errors errors = new BindException(form, "form");
         new BahmniFormValidator().validate(form, errors);
 
         assertThat(errors.hasErrors(), is(false));
     }
+
+    @Test
+    public void shouldNotRejectIfFormIsUpdated() throws Exception {
+        Form form = getForm("form1", "1", 1);
+
+        Errors errors = new BindException(form, "form");
+        new BahmniFormValidator().validate(form, errors);
+
+        assertThat(errors.hasErrors(), is(false));
+    }
+
 }
