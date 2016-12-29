@@ -13,7 +13,7 @@ public class BahmniFormMapperTest {
     @Test
     public void shouldMapFormResourceToBahmniFormResourceObject() {
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", true);
-        FormResource formResource = MotherForm.createFormResource("ValueReference", "FormResourceDataType", "FormResourceUuid", form);
+        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceDataType", "FormResourceUuid", form);
         BahmniFormResource bahmniFormResource = new BahmniFormMapper().map(formResource);
 
         Assert.assertNotNull(bahmniFormResource);

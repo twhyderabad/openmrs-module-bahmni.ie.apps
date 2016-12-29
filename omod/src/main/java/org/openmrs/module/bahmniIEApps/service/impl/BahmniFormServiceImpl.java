@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -126,8 +126,8 @@ public class BahmniFormServiceImpl implements BahmniFormService {
     }
 
     private List<BahmniForm> getLatestFormByVersion(List<Form> forms) {
-        Map<String, Form> bahmniFormMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(forms)) {
+        Map<String, Form> bahmniFormMap = new LinkedHashMap<>();
+        if(CollectionUtils.isNotEmpty(forms)) {
             for (Form form : forms) {
                 String formName = form.getName();
                 if (bahmniFormMap.containsKey(formName)) {
@@ -173,12 +173,14 @@ public class BahmniFormServiceImpl implements BahmniFormService {
 
     private FormResource cloneFormResource(FormResource formResource) {
         FormResource clonedFormResource = new FormResource();
-        clonedFormResource.setName(formResource.getName());
-        clonedFormResource.setValueReferenceInternal(formResource.getValueReference());
-        clonedFormResource.setDatatypeClassname(formResource.getDatatypeClassname());
-        clonedFormResource.setDatatypeConfig(formResource.getDatatypeConfig());
-        clonedFormResource.setPreferredHandlerClassname(formResource.getPreferredHandlerClassname());
-        clonedFormResource.setHandlerConfig(formResource.getHandlerConfig());
+        if(null != formResource.getId()) {
+            clonedFormResource.setName(formResource.getName());
+            clonedFormResource.setValueReferenceInternal(formResource.getValueReference());
+            clonedFormResource.setDatatypeClassname(formResource.getDatatypeClassname());
+            clonedFormResource.setDatatypeConfig(formResource.getDatatypeConfig());
+            clonedFormResource.setPreferredHandlerClassname(formResource.getPreferredHandlerClassname());
+            clonedFormResource.setHandlerConfig(formResource.getHandlerConfig());
+        }
         return clonedFormResource;
     }
 

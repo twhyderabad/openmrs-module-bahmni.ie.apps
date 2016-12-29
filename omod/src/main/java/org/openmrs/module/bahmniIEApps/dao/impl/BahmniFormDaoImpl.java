@@ -49,7 +49,7 @@ public class BahmniFormDaoImpl implements BahmniFormDao{
         if(!includeDraftState) {
             criteria.add(Restrictions.eq("published", Boolean.valueOf(true)));
         }
-        criteria.addOrder(Order.desc("name"));
+        criteria.addOrder(Order.asc("name"));
         criteria.addOrder(Order.desc("version"));
         return criteria.list();
     }
