@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class BahmniFormServiceImpl implements BahmniFormService {
     private FormService formService;
     private BahmniFormDao bahmniFormDao;
-    private final String DEFAULT_VERSION = "1";
+    private final Integer DEFAULT_VERSION = 1;
     private final String MULTIPLE_DRAFT_EXCEPTION = "Form cannot have more than one drafts.";
 
     @Autowired
@@ -46,7 +46,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         FormResource formResource = getFormResource(bahmniFormResource.getUuid());
         if (form.getPublished()) {
             form = cloneForm(form);
-            form.setVersion(incrementVersion(form.getName()));
+            form.setVersion(nextGreatestVersionId(form.getName()).toString());
             formService.saveForm(form);
 
             formResource = cloneFormResource(formResource);
@@ -63,6 +63,10 @@ public class BahmniFormServiceImpl implements BahmniFormService {
     public BahmniForm publish(String formUuid) {
         Form form = formService.getFormByUuid(formUuid);
         if (form != null) {
+            Integer nextVersionNumber = nextGreatestVersionId(form.getName());
+            if(Integer.parseInt(form.getVersion())+1 != nextVersionNumber) {
+                form.setVersion(nextVersionNumber.toString());
+            }
             form.setPublished(Boolean.TRUE);
             formService.saveForm(form);
         }
@@ -196,7 +200,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         }
     }
 
-    private String incrementVersion(String formName) {
+    private Integer nextGreatestVersionId(String formName) {
         List<Form> forms = bahmniFormDao.getAllForms(formName, false, true);
         float version = 0f;
         if (CollectionUtils.isNotEmpty(forms)) {
@@ -209,7 +213,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         }
         if (version > 0f) {
             version++;
-            return String.valueOf((int) version);
+            return (int) version;
         }
         return DEFAULT_VERSION;
     }

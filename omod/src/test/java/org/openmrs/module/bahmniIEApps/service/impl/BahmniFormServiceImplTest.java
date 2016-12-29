@@ -60,7 +60,7 @@ public class BahmniFormServiceImplTest {
         BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceDataType", "FormResourceUuid", "ValueReference", bahmniForm);
 
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
-        FormResource formResource = MotherForm.createFormResource("ValueReference", "FormResourceDataType", "FormResourceUuid", form);
+        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceDataType", "FormResourceUuid", form);
 
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
         when(formService.getFormResourceByUuid(any(String.class))).thenReturn(formResource);
@@ -86,7 +86,7 @@ public class BahmniFormServiceImplTest {
         BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceDataType", "FormResourceUuid", "ValueReference", bahmniForm);
 
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", true);
-        FormResource formResource = MotherForm.createFormResource("ValueReference", "FormResourceDataType", "FormResourceUuid", form);
+        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceDataType", "FormResourceUuid", form);
 
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
         when(formService.getFormResourceByUuid(any(String.class))).thenReturn(formResource);
@@ -108,7 +108,7 @@ public class BahmniFormServiceImplTest {
 
     @Test
     public void shouldPublishForm() {
-        Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", true);
+        Form form = MotherForm.createForm("FormName", "FormUuid", "1", true);
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
 
         BahmniForm updatedBahmniForm = service.publish("FormUuid");
@@ -116,7 +116,48 @@ public class BahmniFormServiceImplTest {
         Assert.assertNotNull(updatedBahmniForm);
         Assert.assertEquals("FormName", updatedBahmniForm.getName());
         Assert.assertEquals("FormUuid", updatedBahmniForm.getUuid());
-        Assert.assertEquals("FormVersion", updatedBahmniForm.getVersion());
+        Assert.assertEquals("1", updatedBahmniForm.getVersion());
+        Assert.assertTrue(updatedBahmniForm.isPublished());
+    }
+
+    @Test
+    public void shouldPublishFormAndProvideTheLatestVersionIfTheVersionOfTheFormIsNotTheLatest() {
+        Form publishedForm1 = MotherForm.createForm("FormName", "FormUuid3", "3", true);
+        Form publishedForm2 = MotherForm.createForm("FormName", "FormUuid4", "4", true);
+        Form publishedForm3 = MotherForm.createForm("FormName", "FormUuid5", "5", true);
+
+        Form form = MotherForm.createForm("FormName", "FormUuid1", "1", false);
+
+        when(formService.getFormByUuid(any(String.class))).thenReturn(form);
+
+        when(bahmniFormDao.getAllForms(any(String.class), any(Boolean.class), any(Boolean.class))).thenReturn(Arrays.asList(publishedForm1, publishedForm2, publishedForm3));
+
+        BahmniForm updatedBahmniForm = service.publish("FormUuid");
+
+        Assert.assertNotNull(updatedBahmniForm);
+        Assert.assertEquals("FormName", updatedBahmniForm.getName());
+        Assert.assertEquals("FormUuid1", updatedBahmniForm.getUuid());
+        Assert.assertEquals("6", updatedBahmniForm.getVersion());
+        Assert.assertTrue(updatedBahmniForm.isPublished());
+    }
+
+    @Test
+    public void shouldPublishFormAndShouldNotUpdateVersionIfTheVersionIsTheLatest() {
+        Form publishedForm1 = MotherForm.createForm("FormName", "FormUuid1", "1", true);
+        Form publishedForm2 = MotherForm.createForm("FormName", "FormUuid2", "2", true);
+
+        Form form = MotherForm.createForm("FormName", "FormUuid3", "3", false);
+
+        when(formService.getFormByUuid(any(String.class))).thenReturn(form);
+
+        when(bahmniFormDao.getAllForms(any(String.class), any(Boolean.class), any(Boolean.class))).thenReturn(Arrays.asList(publishedForm1, publishedForm2));
+
+        BahmniForm updatedBahmniForm = service.publish("FormUuid");
+
+        Assert.assertNotNull(updatedBahmniForm);
+        Assert.assertEquals("FormName", updatedBahmniForm.getName());
+        Assert.assertEquals("FormUuid3", updatedBahmniForm.getUuid());
+        Assert.assertEquals("3", updatedBahmniForm.getVersion());
         Assert.assertTrue(updatedBahmniForm.isPublished());
     }
 
