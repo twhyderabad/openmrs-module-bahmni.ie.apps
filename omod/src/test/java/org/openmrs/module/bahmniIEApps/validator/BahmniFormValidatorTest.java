@@ -77,4 +77,13 @@ public class BahmniFormValidatorTest {
         assertThat(errors.hasErrors(), is(false));
     }
 
+    @Test
+    public void shouldCompareFormNamesCaseInsensitively() throws Exception {
+        Form form = getForm("Form1", "1", null);
+
+        Errors errors = new BindException(form, "form");
+        new BahmniFormValidator().validate(form, errors);
+
+        assertThat(errors.hasErrors(), is(true));
+    }
 }

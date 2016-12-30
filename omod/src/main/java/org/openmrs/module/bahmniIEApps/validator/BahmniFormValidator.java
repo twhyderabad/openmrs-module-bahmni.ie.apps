@@ -24,7 +24,7 @@ public class BahmniFormValidator implements Validator {
         List<Form> filteredForms = allForms.parallelStream()
                 .filter(f -> {
                     boolean sameVersion = f.getVersion().equals(form.getVersion());
-                    boolean sameName = f.getName().equals(form.getName());
+                    boolean sameName = f.getName().equalsIgnoreCase(form.getName());
                     boolean hasId = form.getId() != null;
                     return sameName && sameVersion && !hasId;
                 }).collect(Collectors.toList());
