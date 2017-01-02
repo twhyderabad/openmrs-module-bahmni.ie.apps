@@ -6,6 +6,13 @@ public class BahmniForm {
     private String version;
     private boolean published;
 
+    public BahmniForm(){}
+
+    public BahmniForm(String name, String version){
+        this.name = name;
+        this.version = version;
+    }
+
     public String getName() {
         return name;
     }

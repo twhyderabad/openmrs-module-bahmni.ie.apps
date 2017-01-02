@@ -14,6 +14,7 @@ import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.bahmniIEApps.MotherForm;
 import org.openmrs.module.bahmniIEApps.dao.BahmniFormDao;
+import org.openmrs.module.bahmniIEApps.mapper.BahmniFormMapper;
 import org.openmrs.module.bahmniIEApps.model.BahmniForm;
 import org.openmrs.module.bahmniIEApps.model.BahmniFormResource;
 import org.openmrs.module.bahmniIEApps.service.BahmniFormService;
@@ -21,6 +22,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +45,8 @@ public class BahmniFormServiceImplTest {
 
     private BahmniFormService service;
 
+    private BahmniFormMapper bahmniFormMapper;
+
     @Mock
     private EncounterService encounterService;
 
@@ -52,6 +56,7 @@ public class BahmniFormServiceImplTest {
         mockStatic(Context.class);
         PowerMockito.when(Context.getEncounterService()).thenReturn(encounterService);
         service = new BahmniFormServiceImpl(formService, bahmniFormDao);
+        bahmniFormMapper = new BahmniFormMapper();
     }
 
     @Test
@@ -208,6 +213,8 @@ public class BahmniFormServiceImplTest {
 
         Encounter encounter = new Encounter();
         encounter.setObs(new HashSet<>(Arrays.asList(new Obs(), new Obs())));
+
+        when(bahmniFormDao.getLatestPublishedFormRevisions(new ArrayList<>())).thenReturn(Arrays.asList(bahmniFormMapper.map(form3), bahmniFormMapper.map(form4)));
 
         when(bahmniFormDao.getAllPublishedForms(any(Boolean.class))).thenReturn(Arrays.asList(form1, form2, form3, form4));
 

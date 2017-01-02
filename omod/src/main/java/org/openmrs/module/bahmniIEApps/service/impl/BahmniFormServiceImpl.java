@@ -18,11 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -88,13 +84,27 @@ public class BahmniFormServiceImpl implements BahmniFormService {
             return latestPublishedForms;
         }
 
-        Map<String, List<Obs>> groupedObsByFormName = obs.parallelStream().filter(o -> o.getFormFieldPath() != null)
-                .collect(Collectors.groupingByConcurrent(BahmniFormServiceImpl::getKey));
-        if (groupedObsByFormName.isEmpty()) {
-            return latestPublishedForms;
-        }
+        return getAllLatestPublishedForms(obs);
+    }
 
-        return mergeForms(allPublishedForms, latestPublishedForms, groupedObsByFormName);
+    private List<Form> getAllLatestPublishedForms(Set<Obs> obsList){
+        BahmniFormMapper formMapper = new BahmniFormMapper();
+
+        List<String> formsToIgnore = new ArrayList<>();
+        List<BahmniForm> obsForms = new ArrayList<>();
+        Iterator<Obs> iterator = obsList.iterator();
+        while(iterator.hasNext()){
+            BahmniForm form = formMapper.map(iterator.next());
+            if(form != null){
+                obsForms.add(form);
+                formsToIgnore.add(form.getName());
+            }
+        }
+        List<BahmniForm> latestPublishedFormRevisions = bahmniFormDao.getLatestPublishedFormRevisions(formsToIgnore);
+
+        latestPublishedFormRevisions.addAll(obsForms);
+
+        return bahmniFormDao.getFormDetails(latestPublishedFormRevisions);
     }
 
     private List<BahmniForm> mergeForms(List<Form> allPublishedForms, List<BahmniForm> latestPublishedForms,
