@@ -22,6 +22,6 @@
     <!-- / Required Modules -->
 
     <!-- Module Activator -->
-    <activator>org.openmrs.module.bahmniIEApps.BahmniIEAppsActivator</activator>
+    <activator>org.openmrs.module.bahmni.ie.apps.BahmniIEAppsActivator</activator>
 </module>
 

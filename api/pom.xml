@@ -4,14 +4,14 @@
 
 	<parent>
 		<groupId>org.bahmni.module</groupId>
-		<artifactId>bahmniIEApps</artifactId>
+		<artifactId>bahmni.ie.apps</artifactId>
 		<version>0.88-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>bahmniIEApps-api</artifactId>
+	<artifactId>bahmni.ie.apps-api</artifactId>
 	<packaging>jar</packaging>
-	<name>bahmniIEApps Module API</name>
-	<description>API project for bahmniIEApps</description>
+	<name>bahmni.ie.apps Module API</name>
+	<description>API project for bahmni.ie.apps</description>
 
 	<dependencies>
 	
