@@ -35,7 +35,7 @@ public class MotherForm {
     public static BahmniFormResource createBahmniFormResource(String uuid, String valueReference, BahmniForm bahmniForm) {
         return new BahmniFormResource() {{
             setUuid(uuid);
-            setValueReference(valueReference);
+            setValue(valueReference);
             setForm(bahmniForm);
         }};
     }

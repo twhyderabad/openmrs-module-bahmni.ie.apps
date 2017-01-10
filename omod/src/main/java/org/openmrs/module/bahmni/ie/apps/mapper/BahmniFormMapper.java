@@ -8,7 +8,7 @@ import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
 public class BahmniFormMapper {
     public BahmniFormResource map(FormResource formResource) {
         BahmniFormResource bahmniFormResource = new BahmniFormResource();
-        bahmniFormResource.setValueReference(formResource.getValue().toString());
+        bahmniFormResource.setValue(formResource.getValue().toString());
         bahmniFormResource.setUuid(formResource.getUuid());
         bahmniFormResource.setForm(map(formResource.getForm()));
         return bahmniFormResource;

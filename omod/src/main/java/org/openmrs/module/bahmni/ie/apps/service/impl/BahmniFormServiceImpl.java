@@ -2,6 +2,7 @@ package org.openmrs.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
@@ -57,13 +58,14 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         formResource.setName(bahmniFormResource.getForm().getName());
         formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
         formResource.setDatatypeConfig(constructFileNameFromForm(form));
-        formResource.setValue(bahmniFormResource.getValueReference());
+        formResource.setValue(bahmniFormResource.getValue());
         formResource = formService.saveFormResource(formResource);
         return new BahmniFormMapper().map(formResource);
     }
 
     private String constructFileNameFromForm(Form form) {
-        return JSON_FOLDER_PATH + form.getName()+ "_" + form.getVersion()+".json";
+        String fileName = form.getName()+ "_" + form.getVersion()+".json";
+        return JSON_FOLDER_PATH + fileName;
     }
 
     @Override

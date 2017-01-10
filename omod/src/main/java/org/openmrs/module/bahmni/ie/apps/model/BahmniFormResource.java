@@ -3,7 +3,7 @@ package org.openmrs.module.bahmni.ie.apps.model;
 public class BahmniFormResource{
     private BahmniForm form;
     private String uuid;
-    private String valueReference;
+    private String value;
 
     public BahmniForm getForm() {
         return form;
@@ -21,11 +21,11 @@ public class BahmniFormResource{
         this.uuid = uuid;
     }
 
-    public String getValueReference() {
-        return valueReference;
+    public String getValue() {
+        return value;
     }
 
-    public void setValueReference(String valueReference) {
-        this.valueReference = valueReference;
+    public void setValue(String value) {
+        this.value = value;
     }
 }

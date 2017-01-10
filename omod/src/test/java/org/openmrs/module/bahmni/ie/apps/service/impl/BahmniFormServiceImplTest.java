@@ -72,7 +72,7 @@ public class BahmniFormServiceImplTest {
 
         Assert.assertNotNull(updatedBahmniFormResource);
         Assert.assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
-        Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValueReference());
+        Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValue());
 
         Assert.assertNotNull(updatedBahmniFormResource.getForm());
         Assert.assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
@@ -97,7 +97,7 @@ public class BahmniFormServiceImplTest {
 
         Assert.assertNotNull(updatedBahmniFormResource);
         Assert.assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
-        Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValueReference());
+        Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValue());
 
         Assert.assertNotNull(updatedBahmniFormResource.getForm());
         Assert.assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
