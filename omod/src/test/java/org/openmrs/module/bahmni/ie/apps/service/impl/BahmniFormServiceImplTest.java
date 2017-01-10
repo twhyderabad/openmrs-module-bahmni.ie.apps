@@ -12,6 +12,7 @@ import org.openmrs.Obs;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
+import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
 import org.openmrs.module.bahmni.ie.apps.dao.BahmniFormDao;
 import org.openmrs.module.bahmni.ie.apps.MotherForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
@@ -28,6 +29,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -57,10 +59,10 @@ public class BahmniFormServiceImplTest {
     @Test
     public void shouldSaveFormWithoutCreatingNewFormIfItIsInDraftState() {
         BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
-        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceDataType", "FormResourceUuid", "ValueReference", bahmniForm);
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceUuid", "ValueReference", bahmniForm);
 
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
-        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceDataType", "FormResourceUuid", form);
+        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceUuid", form);
 
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
         when(formService.getFormResourceByUuid(any(String.class))).thenReturn(formResource);
@@ -70,7 +72,6 @@ public class BahmniFormServiceImplTest {
 
         Assert.assertNotNull(updatedBahmniFormResource);
         Assert.assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
-        Assert.assertEquals("FormResourceDataType", updatedBahmniFormResource.getDataType());
         Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValueReference());
 
         Assert.assertNotNull(updatedBahmniFormResource.getForm());
@@ -83,10 +84,10 @@ public class BahmniFormServiceImplTest {
     @Test
     public void shouldCreateNewFormIfItIsInPublishedState() {
         BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
-        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceDataType", "FormResourceUuid", "ValueReference", bahmniForm);
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource( "FormResourceUuid", "ValueReference", bahmniForm);
 
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", true);
-        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceDataType", "FormResourceUuid", form);
+        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceUuid", form);
 
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
         when(formService.getFormResourceByUuid(any(String.class))).thenReturn(formResource);
@@ -96,7 +97,6 @@ public class BahmniFormServiceImplTest {
 
         Assert.assertNotNull(updatedBahmniFormResource);
         Assert.assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
-        Assert.assertEquals("FormResourceDataType", updatedBahmniFormResource.getDataType());
         Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValueReference());
 
         Assert.assertNotNull(updatedBahmniFormResource.getForm());
@@ -277,5 +277,25 @@ public class BahmniFormServiceImplTest {
         assertThat(bahmniForms.get(0).getName(), is("FormName1"));
         assertThat(bahmniForms.get(1).getVersion(), is("1"));
         assertThat(bahmniForms.get(1).getName(), is("FormName2"));
+    }
+
+    @Test
+    public void ensureThatTheDataTypeParamsAreSetCorrectlyOnFormResource(){
+        BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource( "FormResourceUuid", "ValueReference", bahmniForm);
+
+        Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
+        FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceUuid", form);
+
+        when(formService.getFormByUuid(any(String.class))).thenReturn(form);
+        when(formService.getFormResourceByUuid(any(String.class))).thenReturn(formResource);
+
+        formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
+        formResource.setDatatypeConfig("FormName_FormVersion.json");
+
+        when(formService.saveFormResource(formResource)).thenReturn(formResource);
+
+        service.saveFormResource(bahmniFormResource);
+        verify(formService).saveFormResource(formResource);
     }
 }

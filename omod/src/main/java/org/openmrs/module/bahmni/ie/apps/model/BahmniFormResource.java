@@ -3,7 +3,6 @@ package org.openmrs.module.bahmni.ie.apps.model;
 public class BahmniFormResource{
     private BahmniForm form;
     private String uuid;
-    private String dataType;
     private String valueReference;
 
     public BahmniForm getForm() {
@@ -20,14 +19,6 @@ public class BahmniFormResource{
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
-    }
-
-    public String getDataType() {
-        return dataType;
-    }
-
-    public void setDataType(String dataType) {
-        this.dataType = dataType;
     }
 
     public String getValueReference() {

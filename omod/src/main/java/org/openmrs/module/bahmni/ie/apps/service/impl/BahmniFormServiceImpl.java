@@ -9,6 +9,7 @@ import org.openmrs.Obs;
 import org.openmrs.api.APIException;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
+import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
 import org.openmrs.module.bahmni.ie.apps.dao.BahmniFormDao;
 import org.openmrs.module.bahmni.ie.apps.mapper.BahmniFormMapper;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
@@ -32,6 +33,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
     private BahmniFormDao bahmniFormDao;
     private final Integer DEFAULT_VERSION = 1;
     private final String MULTIPLE_DRAFT_EXCEPTION = "Form cannot have more than one drafts.";
+    private final String JSON_FOLDER_PATH = "/var/www/bahmni_config/openmrs/forms/";
 
     @Autowired
     public BahmniFormServiceImpl(FormService formService, BahmniFormDao bahmniFormDao) {
@@ -53,10 +55,15 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         }
         formResource.setForm(form);
         formResource.setName(bahmniFormResource.getForm().getName());
-        formResource.setDatatypeClassname(bahmniFormResource.getDataType());
-        formResource.setValueReferenceInternal(bahmniFormResource.getValueReference());
+        formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
+        formResource.setDatatypeConfig(constructFileNameFromForm(form));
+        formResource.setValue(bahmniFormResource.getValueReference());
         formResource = formService.saveFormResource(formResource);
         return new BahmniFormMapper().map(formResource);
+    }
+
+    private String constructFileNameFromForm(Form form) {
+        return JSON_FOLDER_PATH + form.getName()+ "_" + form.getVersion()+".json";
     }
 
     @Override
@@ -179,7 +186,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         FormResource clonedFormResource = new FormResource();
         if(null != formResource.getId()) {
             clonedFormResource.setName(formResource.getName());
-            clonedFormResource.setValueReferenceInternal(formResource.getValueReference());
+            clonedFormResource.setValue(formResource.getValue());
             clonedFormResource.setDatatypeClassname(formResource.getDatatypeClassname());
             clonedFormResource.setDatatypeConfig(formResource.getDatatypeConfig());
             clonedFormResource.setPreferredHandlerClassname(formResource.getPreferredHandlerClassname());

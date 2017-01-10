@@ -11,7 +11,7 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.bahmni.ie.apps;
+package org.bahmni.module.bahmni.ie.apps;
 
 
 import org.apache.commons.logging.Log; 
