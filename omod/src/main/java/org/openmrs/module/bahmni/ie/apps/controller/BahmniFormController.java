@@ -17,7 +17,7 @@ import java.util.List;
 
 @Controller
 public class BahmniFormController extends BaseRestController {
-    private final String baseUrl = "/rest/" + RestConstants.VERSION_1 + "/bahmniIE";
+    private final String baseUrl = "/rest/" + RestConstants.VERSION_1 + "/bahmniie/form";
 
     private BahmniFormService bahmniFormService;
 
