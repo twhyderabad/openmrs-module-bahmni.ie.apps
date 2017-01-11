@@ -95,13 +95,13 @@ public class BahmniFormServiceImpl implements BahmniFormService {
 
         Encounter encounter = Context.getEncounterService().getEncounterByUuid(encounterUuid);
         Set<Obs> obs = encounter.getAllObs(false);
-        if (obs.isEmpty()) {
+        if (CollectionUtils.isEmpty(obs)) {
             return latestPublishedForms;
         }
 
         Map<String, List<Obs>> groupedObsByFormName = obs.parallelStream().filter(o -> o.getFormFieldPath() != null)
                 .collect(Collectors.groupingByConcurrent(BahmniFormServiceImpl::getKey));
-        if (groupedObsByFormName.isEmpty()) {
+        if (MapUtils.isEmpty(groupedObsByFormName)) {
             return latestPublishedForms;
         }
 
@@ -115,7 +115,9 @@ public class BahmniFormServiceImpl implements BahmniFormService {
             boolean isSameVersion = latestPublishedForms.parallelStream()
                     .anyMatch(isSameBahmniForm(formNameAndVersion));
             if (!isSameVersion) {
-                Form publishedFormWithObs = allPublishedForms.stream().filter(isSameForm(formNameAndVersion)).collect(Collectors.toList()).get(0);
+                List<Form> listForms = allPublishedForms.stream().filter(isSameForm(formNameAndVersion)).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(listForms)) continue;
+                Form publishedFormWithObs = listForms.get(0);
                 latestPublishedForms = latestPublishedForms.parallelStream().map(form -> {
                     if (form.getName().equals(formNameAndVersion[0])) {
                         form.setVersion(publishedFormWithObs.getVersion());
