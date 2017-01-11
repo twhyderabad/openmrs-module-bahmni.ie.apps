@@ -298,4 +298,9 @@ public class BahmniFormServiceImplTest {
         service.saveFormResource(bahmniFormResource);
         verify(formService).saveFormResource(formResource);
     }
+
+    @Test
+    public void ensureThatTheDataTypeConfigShouldBeReplacedAllSpecialCharacters() {
+
+    }
 }

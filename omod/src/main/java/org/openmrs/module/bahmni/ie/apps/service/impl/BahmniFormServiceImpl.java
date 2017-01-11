@@ -16,6 +16,7 @@ import org.openmrs.module.bahmni.ie.apps.mapper.BahmniFormMapper;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
+import org.openmrs.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 public class BahmniFormServiceImpl implements BahmniFormService {
     private FormService formService;
     private BahmniFormDao bahmniFormDao;
+
     private final Integer DEFAULT_VERSION = 1;
     private final String MULTIPLE_DRAFT_EXCEPTION = "Form cannot have more than one drafts.";
     private final String JSON_FOLDER_PATH = "/var/www/bahmni_config/openmrs/forms/";
@@ -64,7 +66,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
     }
 
     private String constructFileNameFromForm(Form form) {
-        String fileName = form.getName()+ "_" + form.getVersion()+".json";
+        String fileName = BahmniFormUtils.normalizeFileName(form.getName())+ "_" + form.getVersion()+".json";
         return JSON_FOLDER_PATH + fileName;
     }
 
