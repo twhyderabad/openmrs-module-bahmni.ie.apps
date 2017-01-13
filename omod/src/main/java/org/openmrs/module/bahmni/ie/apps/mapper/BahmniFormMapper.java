@@ -11,6 +11,7 @@ public class BahmniFormMapper {
         bahmniFormResource.setValue(formResource.getValue().toString());
         bahmniFormResource.setUuid(formResource.getUuid());
         bahmniFormResource.setForm(map(formResource.getForm()));
+        bahmniFormResource.setDataType(formResource.getDatatypeClassname());
         return bahmniFormResource;
     }
 
