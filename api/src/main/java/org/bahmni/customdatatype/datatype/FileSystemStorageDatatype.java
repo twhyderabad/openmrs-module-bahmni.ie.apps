@@ -35,7 +35,7 @@ public class FileSystemStorageDatatype extends SerializingCustomDatatype<String>
         try {
             return FileUtils.readFileToString(new File(fileName));
         } catch (IOException e) {
-            throw new UncheckedIOException("Unable to read from the file with name [" + fileName + "]", e);
+            throw new UncheckedIOException("Unable to read from the file with name [" + new File(fileName).getAbsoluteFile() + "]", e);
         }
     }
 }

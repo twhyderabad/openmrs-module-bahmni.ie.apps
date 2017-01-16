@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <global_property property="bahmni.forms.directory" property_value="src/test/resources/" uuid="4f55827e-26fe-102b-80cb-0017a47871b4"/>
+    <form form_id="2" name="Bahmni Form" version="5" build="0" published="0" description="Test form" creator="1" date_created="2005-08-07 00:00:00.0" changed_by="1" date_changed="2007-10-24 14:51:53.0" retired="false" retired_reason="" uuid="d9218f76-6c39-45f4-8efa-4c5c6c199f52"/>
+    <form_resource form_resource_id="1" form_id="2" name = "Bahmni Form" value_reference = "src/test/resources/Bahmni_Form_1.json" datatype="org.bahmni.customdatatype.datatype.FileSystemStorageDatatype" datatype_config="src/test/resources/Bahmni_Form_1.json" uuid="77176613-8412-460e-bc60-3b25531f9933" />
+</dataset>

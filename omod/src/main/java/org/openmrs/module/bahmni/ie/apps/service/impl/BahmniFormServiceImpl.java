@@ -2,12 +2,11 @@ package org.openmrs.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.Obs;
-import org.openmrs.api.APIException;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
 import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
@@ -18,14 +17,11 @@ import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -33,15 +29,17 @@ import java.util.stream.Collectors;
 public class BahmniFormServiceImpl implements BahmniFormService {
     private FormService formService;
     private BahmniFormDao bahmniFormDao;
+    private AdministrationService administrationService;
 
     private final Integer DEFAULT_VERSION = 1;
-    private final String MULTIPLE_DRAFT_EXCEPTION = "Form cannot have more than one drafts.";
-    private final String JSON_FOLDER_PATH = "/var/www/bahmni_config/openmrs/forms/";
+    private final String DEFAULT_JSON_FOLDER_PATH = "/var/www/bahmni_config/openmrs/forms/";
+    private final String GP_BAHMNI_FORM_PATH_JSON = "bahmni.forms.directory";
 
     @Autowired
-    public BahmniFormServiceImpl(FormService formService, BahmniFormDao bahmniFormDao) {
+    public BahmniFormServiceImpl(FormService formService, BahmniFormDao bahmniFormDao, @Qualifier("adminService") AdministrationService administrationService) {
         this.formService = formService;
         this.bahmniFormDao = bahmniFormDao;
+        this.administrationService = administrationService;
     }
 
     @Override
@@ -67,7 +65,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
 
     private String constructFileNameFromForm(Form form) {
         String fileName = BahmniFormUtils.normalizeFileName(form.getName())+ "_" + form.getVersion()+".json";
-        return JSON_FOLDER_PATH + fileName;
+        return administrationService.getGlobalProperty(GP_BAHMNI_FORM_PATH_JSON,DEFAULT_JSON_FOLDER_PATH) + fileName;
     }
 
     @Override
@@ -79,9 +77,21 @@ public class BahmniFormServiceImpl implements BahmniFormService {
                 form.setVersion(nextVersionNumber.toString());
             }
             form.setPublished(Boolean.TRUE);
-            formService.saveForm(form);
+            form = formService.saveForm(form);
+            updateFormResourceWithLatestVersion(form);
         }
         return new BahmniFormMapper().map(form);
+    }
+
+    private void updateFormResourceWithLatestVersion(Form form){
+        Collection<FormResource> formResourceCollection = formService.getFormResourcesForForm(form);
+        if(formResourceCollection.size() == 1){
+            FormResource formResource = formResourceCollection.iterator().next();
+            formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
+            formResource.setDatatypeConfig(constructFileNameFromForm(form));
+            formResource.setValue(formResource.getValue());
+            formService.saveFormResource(formResource);
+        }
     }
 
     @Override
@@ -199,18 +209,6 @@ public class BahmniFormServiceImpl implements BahmniFormService {
             clonedFormResource.setHandlerConfig(formResource.getHandlerConfig());
         }
         return clonedFormResource;
-    }
-
-    /**
-     * This will throw APIException.class exception if there is more than one draft version.
-     *
-     * @param formName
-     */
-    private void validateForMultipleDraft(String formName) {
-        List<Form> forms = bahmniFormDao.getDraftFormByName(formName);
-        if (CollectionUtils.isNotEmpty(forms) && forms.size() > 1) {
-            throw new APIException(MULTIPLE_DRAFT_EXCEPTION);
-        }
     }
 
     private Integer nextGreatestVersionId(String formName) {

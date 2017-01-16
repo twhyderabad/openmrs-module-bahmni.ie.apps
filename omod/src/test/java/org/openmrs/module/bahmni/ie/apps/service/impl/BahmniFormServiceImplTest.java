@@ -9,6 +9,7 @@ import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.Obs;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
@@ -22,6 +23,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +45,9 @@ public class BahmniFormServiceImplTest {
     @Mock
     private BahmniFormDao bahmniFormDao;
 
+    @Mock
+    private AdministrationService administrationService;
+
     private BahmniFormService service;
 
     @Mock
@@ -53,7 +58,7 @@ public class BahmniFormServiceImplTest {
         initMocks(this);
         mockStatic(Context.class);
         PowerMockito.when(Context.getEncounterService()).thenReturn(encounterService);
-        service = new BahmniFormServiceImpl(formService, bahmniFormDao);
+        service = new BahmniFormServiceImpl(formService, bahmniFormDao,administrationService);
     }
 
     @Test
@@ -110,6 +115,8 @@ public class BahmniFormServiceImplTest {
     public void shouldPublishForm() {
         Form form = MotherForm.createForm("FormName", "FormUuid", "1", true);
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
+        when(formService.saveForm(form)).thenReturn(form);
+        when(formService.getFormResourcesForForm(form)).thenReturn(new ArrayList<>());
 
         BahmniForm updatedBahmniForm = service.publish("FormUuid");
 
@@ -131,6 +138,9 @@ public class BahmniFormServiceImplTest {
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
 
         when(bahmniFormDao.getAllForms(any(String.class), any(Boolean.class), any(Boolean.class))).thenReturn(Arrays.asList(publishedForm1, publishedForm2, publishedForm3));
+        when(formService.saveForm(form)).thenReturn(form);
+        when(formService.getFormResourcesForForm(form)).thenReturn(new ArrayList<>());
+
 
         BahmniForm updatedBahmniForm = service.publish("FormUuid");
 
@@ -149,6 +159,8 @@ public class BahmniFormServiceImplTest {
         Form form = MotherForm.createForm("FormName", "FormUuid3", "3", false);
 
         when(formService.getFormByUuid(any(String.class))).thenReturn(form);
+        when(formService.saveForm(form)).thenReturn(form);
+        when(formService.getFormResourcesForForm(form)).thenReturn(new ArrayList<>());
 
         when(bahmniFormDao.getAllForms(any(String.class), any(Boolean.class), any(Boolean.class))).thenReturn(Arrays.asList(publishedForm1, publishedForm2));
 
@@ -297,10 +309,5 @@ public class BahmniFormServiceImplTest {
 
         service.saveFormResource(bahmniFormResource);
         verify(formService).saveFormResource(formResource);
-    }
-
-    @Test
-    public void ensureThatTheDataTypeConfigShouldBeReplacedAllSpecialCharacters() {
-
     }
 }

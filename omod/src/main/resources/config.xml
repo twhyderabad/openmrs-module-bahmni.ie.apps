@@ -23,5 +23,14 @@
 
     <!-- Module Activator -->
     <activator>org.bahmni.module.bahmni.ie.apps.BahmniIEAppsActivator</activator>
+
+    <globalProperty>
+        <property>bahmni.forms.directory</property>
+        <defaultValue>/var/www/bahmni_config/openmrs/forms/</defaultValue>
+        <description>
+            Filesystem path for saving the bahmni forms
+        </description>
+    </globalProperty>
+
 </module>
 
