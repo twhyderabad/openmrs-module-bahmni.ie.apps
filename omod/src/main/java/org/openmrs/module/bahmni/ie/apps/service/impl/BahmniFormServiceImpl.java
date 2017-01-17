@@ -32,7 +32,7 @@ public class BahmniFormServiceImpl implements BahmniFormService {
     private AdministrationService administrationService;
 
     private final Integer DEFAULT_VERSION = 1;
-    private final String DEFAULT_JSON_FOLDER_PATH = "/var/www/bahmni_config/openmrs/forms/";
+    private final String DEFAULT_JSON_FOLDER_PATH = "/home/bahmni/clinical_forms/";
     private final String GP_BAHMNI_FORM_PATH_JSON = "bahmni.forms.directory";
 
     @Autowired

@@ -26,7 +26,7 @@
 
     <globalProperty>
         <property>bahmni.forms.directory</property>
-        <defaultValue>/var/www/bahmni_config/openmrs/forms/</defaultValue>
+        <defaultValue>/home/bahmni/clinical_forms/</defaultValue>
         <description>
             Filesystem path for saving the bahmni forms
         </description>
