@@ -9,6 +9,7 @@ import java.io.UncheckedIOException;
 
 public class FileSystemStorageDatatype extends SerializingCustomDatatype<String> {
 
+    public static final String DEFAULT_ENCODING = "utf-8";
     private String fileName;
 
     @Override
@@ -24,7 +25,7 @@ public class FileSystemStorageDatatype extends SerializingCustomDatatype<String>
 
     private void writeStringToFile(String typedValue, File file) {
         try {
-            FileUtils.writeStringToFile(file, typedValue);
+            FileUtils.writeStringToFile(file, typedValue, DEFAULT_ENCODING);
         } catch (IOException e) {
             throw new UncheckedIOException("Unable to save the file with name ["+this.fileName+"]",e);
         }
@@ -33,7 +34,7 @@ public class FileSystemStorageDatatype extends SerializingCustomDatatype<String>
     @Override
     public String deserialize(String fileName) {
         try {
-            return FileUtils.readFileToString(new File(fileName));
+            return FileUtils.readFileToString(new File(fileName), DEFAULT_ENCODING);
         } catch (IOException e) {
             throw new UncheckedIOException("Unable to read from the file with name [" + new File(fileName).getAbsoluteFile() + "]", e);
         }
