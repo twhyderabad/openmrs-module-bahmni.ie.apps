@@ -9,4 +9,5 @@ public interface BahmniFormService {
     BahmniFormResource saveFormResource(BahmniFormResource bahmniFormResource);
     BahmniForm publish(String formUuid);
     List<BahmniForm> getAllLatestPublishedForms(boolean includeRetired, String encounterUuid);
+    List<BahmniForm> getAllForms();
 }

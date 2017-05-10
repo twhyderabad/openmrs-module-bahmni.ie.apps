@@ -310,4 +310,18 @@ public class BahmniFormServiceImplTest {
         service.saveFormResource(bahmniFormResource);
         verify(formService).saveFormResource(formResource);
     }
+
+    @Test
+    public void shouldReturnAllForms() {
+        Form form1 = MotherForm.createForm("FormName-1", "FormUuid1", "1", true);
+        Form form2 = MotherForm.createForm("FormName-1", "FormUuid2", "2", true);
+        Form form3 = MotherForm.createForm("FormName-2", "FormUuid3", "1", true);
+        Form form4 = MotherForm.createForm("FormName-3", "FormUuid4", "1", false);
+        when(bahmniFormDao.getAllForms(any(String.class), any(Boolean.class), any(Boolean.class))).thenReturn(Arrays.asList(form1, form2, form3, form4));
+
+        List<BahmniForm> bahmniForms = service.getAllForms();
+
+        Assert.assertNotNull(bahmniForms);
+        Assert.assertEquals(4, bahmniForms.size());
+    }
 }

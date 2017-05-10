@@ -118,6 +118,17 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         return mergeForms(allPublishedForms, latestPublishedForms, groupedObsByFormName);
     }
 
+    @Override
+    public List<BahmniForm> getAllForms() {
+        List<Form> formList = bahmniFormDao.getAllForms(null, false, false);
+        List<BahmniForm> bahmniFormList = new ArrayList<>();
+        BahmniFormMapper mapper = new BahmniFormMapper();
+        for(Form form: formList){
+           bahmniFormList.add(mapper.map(form));
+        }
+        return bahmniFormList;
+    }
+
     private List<BahmniForm> mergeForms(List<Form> allPublishedForms, List<BahmniForm> latestPublishedForms,
                                         Map<String, List<Obs>> groupedObsByFormName) {
         for (String formName : groupedObsByFormName.keySet()) {
