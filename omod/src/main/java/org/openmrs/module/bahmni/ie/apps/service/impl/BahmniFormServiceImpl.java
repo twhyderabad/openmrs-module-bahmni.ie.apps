@@ -2,6 +2,7 @@ package org.openmrs.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
@@ -9,7 +10,7 @@ import org.openmrs.Obs;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
-import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
+import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.bahmni.ie.apps.dao.BahmniFormDao;
 import org.openmrs.module.bahmni.ie.apps.mapper.BahmniFormMapper;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
@@ -18,15 +19,13 @@ import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Service
-public class BahmniFormServiceImpl implements BahmniFormService {
+public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniFormService {
     private FormService formService;
     private BahmniFormDao bahmniFormDao;
     private AdministrationService administrationService;
@@ -40,6 +39,9 @@ public class BahmniFormServiceImpl implements BahmniFormService {
         this.formService = formService;
         this.bahmniFormDao = bahmniFormDao;
         this.administrationService = administrationService;
+    }
+
+    public BahmniFormServiceImpl() {
     }
 
     @Override

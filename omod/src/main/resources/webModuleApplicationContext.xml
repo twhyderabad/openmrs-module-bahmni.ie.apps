@@ -22,5 +22,14 @@
 
 	<!-- Add here beans related to the web context -->
 
-		
+	<bean id="bahmniFormService" class="org.openmrs.module.bahmni.ie.apps.service.impl.BahmniFormServiceImpl"/>
+
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list>
+				<value>org.openmrs.module.bahmni.ie.apps.service.BahmniFormService</value>
+				<ref local="bahmniFormService"/>
+			</list>
+		</property>
+	</bean>
 </beans>
