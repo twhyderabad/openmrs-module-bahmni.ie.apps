@@ -1,17 +1,14 @@
 package org.openmrs.module.bahmni.ie.apps.controller;
 
-import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
-import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
+import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
+import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
+import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,6 +21,12 @@ public class BahmniFormController extends BaseRestController {
     @Autowired
     public BahmniFormController(BahmniFormService bahmniFormService) {
         this.bahmniFormService = bahmniFormService;
+    }
+
+    @RequestMapping(value = baseUrl+"/saveTranslation", method = RequestMethod.POST)
+    @ResponseBody
+    public FormTranslation FormTranslation(@RequestBody FormTranslation formTranslation){
+        return bahmniFormService.saveTranslation(formTranslation);
     }
 
     @RequestMapping(value = baseUrl + "/publish", method = RequestMethod.POST )

@@ -2,11 +2,14 @@ package org.openmrs.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
+import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.Obs;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
@@ -15,15 +18,20 @@ import org.openmrs.module.bahmni.ie.apps.dao.BahmniFormDao;
 import org.openmrs.module.bahmni.ie.apps.mapper.BahmniFormMapper;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
+import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniFormService {
     private FormService formService;
@@ -33,6 +41,7 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
     private final Integer DEFAULT_VERSION = 1;
     private final String DEFAULT_JSON_FOLDER_PATH = "/home/bahmni/clinical_forms/";
     private final String GP_BAHMNI_FORM_PATH_JSON = "bahmni.forms.directory";
+    private String FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations/";
 
     @Autowired
     public BahmniFormServiceImpl(FormService formService, BahmniFormDao bahmniFormDao, @Qualifier("adminService") AdministrationService administrationService) {
@@ -129,6 +138,43 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
            bahmniFormList.add(mapper.map(form));
         }
         return bahmniFormList;
+    }
+
+    @Override
+    public FormTranslation saveTranslation(FormTranslation formTranslation) {
+        if(!validate(formTranslation)){
+            throw new APIException("Invalid Parameters");
+        }
+        String formName = formTranslation.getFormName();
+        String version = formTranslation.getVersion();
+        File translationFile = new File(String.format("%s/%s_%s.json", FORM_TRANSLATIONS_PATH, formName, version));
+        translationFile.getParentFile().mkdirs();
+        saveTranslationsToFile(formTranslation, translationFile);
+
+        return  formTranslation;
+    }
+
+    private void saveTranslationsToFile(FormTranslation formTranslation, File translationFile) {
+        try {
+            String fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile) : "";
+            JSONObject translations = new JSONObject();
+            translations.put("labels", new JSONObject(formTranslation.getLabels()));
+            translations.put("concepts", new JSONObject(formTranslation.getConcepts()));
+
+            JSONObject translationsJson = isNotEmpty(fileContent) ? new JSONObject(fileContent) : new JSONObject();
+            translationsJson.put(formTranslation.getLocale(), translations);
+
+            FileUtils.writeStringToFile(translationFile, translationsJson.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new APIException(e.getMessage(), e);
+        }
+    }
+
+    private boolean validate(FormTranslation formTranslation) {
+        return isNotEmpty(formTranslation.getFormName()) &&
+                isNotEmpty(formTranslation.getLocale()) &&
+                isNotEmpty(formTranslation.getVersion());
     }
 
     private List<BahmniForm> mergeForms(List<Form> allPublishedForms, List<BahmniForm> latestPublishedForms,

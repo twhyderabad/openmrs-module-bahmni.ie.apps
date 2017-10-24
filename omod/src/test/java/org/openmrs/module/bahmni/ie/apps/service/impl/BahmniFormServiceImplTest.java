@@ -1,14 +1,19 @@
 package org.openmrs.module.bahmni.ie.apps.service.impl;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.Obs;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.FormService;
@@ -18,18 +23,21 @@ import org.openmrs.module.bahmni.ie.apps.dao.BahmniFormDao;
 import org.openmrs.module.bahmni.ie.apps.MotherForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
+import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.*;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,6 +56,9 @@ public class BahmniFormServiceImplTest {
     @Mock
     private AdministrationService administrationService;
 
+    @Rule
+    ExpectedException expectedException = ExpectedException.none();
+
     private BahmniFormService service;
 
     @Mock
@@ -58,7 +69,7 @@ public class BahmniFormServiceImplTest {
         initMocks(this);
         mockStatic(Context.class);
         PowerMockito.when(Context.getEncounterService()).thenReturn(encounterService);
-        service = new BahmniFormServiceImpl(formService, bahmniFormDao,administrationService);
+        service = new BahmniFormServiceImpl(formService, bahmniFormDao, administrationService);
     }
 
     @Test
@@ -76,20 +87,20 @@ public class BahmniFormServiceImplTest {
         BahmniFormResource updatedBahmniFormResource = service.saveFormResource(bahmniFormResource);
 
         Assert.assertNotNull(updatedBahmniFormResource);
-        Assert.assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
-        Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValue());
+        assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
+        assertEquals("ValueReference", updatedBahmniFormResource.getValue());
 
         Assert.assertNotNull(updatedBahmniFormResource.getForm());
-        Assert.assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
-        Assert.assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
-        Assert.assertEquals("FormVersion", updatedBahmniFormResource.getForm().getVersion());
+        assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
+        assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
+        assertEquals("FormVersion", updatedBahmniFormResource.getForm().getVersion());
         Assert.assertFalse(updatedBahmniFormResource.getForm().isPublished());
     }
 
     @Test
     public void shouldCreateNewFormIfItIsInPublishedState() {
         BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
-        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource( "FormResourceUuid", "ValueReference", bahmniForm);
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceUuid", "ValueReference", bahmniForm);
 
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", true);
         FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceUuid", form);
@@ -101,13 +112,13 @@ public class BahmniFormServiceImplTest {
         BahmniFormResource updatedBahmniFormResource = service.saveFormResource(bahmniFormResource);
 
         Assert.assertNotNull(updatedBahmniFormResource);
-        Assert.assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
-        Assert.assertEquals("ValueReference", updatedBahmniFormResource.getValue());
+        assertEquals("FormResourceUuid", updatedBahmniFormResource.getUuid());
+        assertEquals("ValueReference", updatedBahmniFormResource.getValue());
 
         Assert.assertNotNull(updatedBahmniFormResource.getForm());
-        Assert.assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
-        Assert.assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
-        Assert.assertEquals("FormVersion", updatedBahmniFormResource.getForm().getVersion());
+        assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
+        assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
+        assertEquals("FormVersion", updatedBahmniFormResource.getForm().getVersion());
         Assert.assertTrue(updatedBahmniFormResource.getForm().isPublished());
     }
 
@@ -121,9 +132,9 @@ public class BahmniFormServiceImplTest {
         BahmniForm updatedBahmniForm = service.publish("FormUuid");
 
         Assert.assertNotNull(updatedBahmniForm);
-        Assert.assertEquals("FormName", updatedBahmniForm.getName());
-        Assert.assertEquals("FormUuid", updatedBahmniForm.getUuid());
-        Assert.assertEquals("1", updatedBahmniForm.getVersion());
+        assertEquals("FormName", updatedBahmniForm.getName());
+        assertEquals("FormUuid", updatedBahmniForm.getUuid());
+        assertEquals("1", updatedBahmniForm.getVersion());
         Assert.assertTrue(updatedBahmniForm.isPublished());
     }
 
@@ -145,9 +156,9 @@ public class BahmniFormServiceImplTest {
         BahmniForm updatedBahmniForm = service.publish("FormUuid");
 
         Assert.assertNotNull(updatedBahmniForm);
-        Assert.assertEquals("FormName", updatedBahmniForm.getName());
-        Assert.assertEquals("FormUuid1", updatedBahmniForm.getUuid());
-        Assert.assertEquals("6", updatedBahmniForm.getVersion());
+        assertEquals("FormName", updatedBahmniForm.getName());
+        assertEquals("FormUuid1", updatedBahmniForm.getUuid());
+        assertEquals("6", updatedBahmniForm.getVersion());
         Assert.assertTrue(updatedBahmniForm.isPublished());
     }
 
@@ -167,9 +178,9 @@ public class BahmniFormServiceImplTest {
         BahmniForm updatedBahmniForm = service.publish("FormUuid");
 
         Assert.assertNotNull(updatedBahmniForm);
-        Assert.assertEquals("FormName", updatedBahmniForm.getName());
-        Assert.assertEquals("FormUuid3", updatedBahmniForm.getUuid());
-        Assert.assertEquals("3", updatedBahmniForm.getVersion());
+        assertEquals("FormName", updatedBahmniForm.getName());
+        assertEquals("FormUuid3", updatedBahmniForm.getUuid());
+        assertEquals("3", updatedBahmniForm.getVersion());
         Assert.assertTrue(updatedBahmniForm.isPublished());
     }
 
@@ -184,10 +195,10 @@ public class BahmniFormServiceImplTest {
         List<BahmniForm> bahmniForms = service.getAllLatestPublishedForms(false, null);
 
         Assert.assertNotNull(bahmniForms);
-        Assert.assertEquals(1, bahmniForms.size());
-        Assert.assertEquals("FormName", bahmniForms.get(0).getName());
-        Assert.assertEquals("FormUuid4", bahmniForms.get(0).getUuid());
-        Assert.assertEquals("4", bahmniForms.get(0).getVersion());
+        assertEquals(1, bahmniForms.size());
+        assertEquals("FormName", bahmniForms.get(0).getName());
+        assertEquals("FormUuid4", bahmniForms.get(0).getUuid());
+        assertEquals("4", bahmniForms.get(0).getVersion());
         Assert.assertTrue(bahmniForms.get(0).isPublished());
     }
 
@@ -292,9 +303,9 @@ public class BahmniFormServiceImplTest {
     }
 
     @Test
-    public void ensureThatTheDataTypeParamsAreSetCorrectlyOnFormResource(){
+    public void ensureThatTheDataTypeParamsAreSetCorrectlyOnFormResource() {
         BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
-        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource( "FormResourceUuid", "ValueReference", bahmniForm);
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("FormResourceUuid", "ValueReference", bahmniForm);
 
         Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
         FormResource formResource = MotherForm.createFormResource(1, "ValueReference", "FormResourceUuid", form);
@@ -322,6 +333,85 @@ public class BahmniFormServiceImplTest {
         List<BahmniForm> bahmniForms = service.getAllForms();
 
         Assert.assertNotNull(bahmniForms);
-        Assert.assertEquals(4, bahmniForms.size());
+        assertEquals(4, bahmniForms.size());
+    }
+
+    @Test
+    public void shouldSaveTranslationsOfGivenForm() throws Exception {
+        BahmniFormService bahmniFormService = new BahmniFormServiceImpl();
+        String tempTranslationsPath = createTempFolder(bahmniFormService);
+        FormTranslation formTranslation = createFormTranslation("en", "1", "test_form");
+        bahmniFormService.saveTranslation(formTranslation);
+        String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+        File translationFile = new File(tempTranslationsPath + "/test_form_1.json");
+        assertTrue(translationFile.exists());
+        assertEquals(FileUtils.readFileToString(translationFile), expected);
+    }
+
+    @Test
+    public void shouldThrowAPIExceptionIfFormNameIsNotPresent() throws Exception {
+        BahmniFormService bahmniFormService = new BahmniFormServiceImpl();
+        createTempFolder(bahmniFormService);
+        FormTranslation formTranslation = createFormTranslation("en", "1", null);
+        expectedException.expect(APIException.class);
+        expectedException.expectMessage("Invalid Parameters");
+        bahmniFormService.saveTranslation(formTranslation);
+    }
+
+    @Test
+    public void shouldThrowAPIExceptionIfFormVersionIsNotPresent() throws Exception {
+        BahmniFormService bahmniFormService = new BahmniFormServiceImpl();
+        createTempFolder(bahmniFormService);
+        FormTranslation formTranslation = createFormTranslation("en", null, "test_form");
+        expectedException.expect(APIException.class);
+        expectedException.expectMessage("Invalid Parameters");
+        bahmniFormService.saveTranslation(formTranslation);
+    }
+
+    @Test
+    public void shouldThrowAPIExceptionIfLocaleIsNotPresent() throws Exception {
+        BahmniFormService bahmniFormService = new BahmniFormServiceImpl();
+        createTempFolder(bahmniFormService);
+        FormTranslation formTranslation = createFormTranslation(null, "1", "test_form");
+        expectedException.expect(APIException.class);
+        expectedException.expectMessage("Invalid Parameters");
+        bahmniFormService.saveTranslation(formTranslation);
+    }
+
+    @Test
+    public void shouldThrowAPIExceptionIfItUnableToSaveTranslations() throws Exception {
+        BahmniFormService bahmniFormService = new BahmniFormServiceImpl();
+        FormTranslation formTranslation = createFormTranslation("en", "1", "test_form");
+        expectedException.expect(APIException.class);
+        expectedException.expectMessage("/test_form_1.json' could not be created");
+        bahmniFormService.saveTranslation(formTranslation);
+    }
+
+    private static FormTranslation createFormTranslation(String locale, String version, String formName) {
+        FormTranslation formTranslation = new FormTranslation();
+        formTranslation.setLocale(locale);
+        formTranslation.setVersion(version);
+        formTranslation.setFormName(formName);
+        HashMap<String, String> concepts = new HashMap<>();
+        concepts.put("TEMPERATURE_1", "Temperature");
+        formTranslation.setConcepts(concepts);
+        HashMap<String, String> labels = new HashMap<>();
+        labels.put("LABEL_2", "Vitals");
+        formTranslation.setLabels(labels);
+        return formTranslation;
+    }
+
+    private static String createTempFolder(BahmniFormService bahmniFormService) throws IOException, NoSuchFieldException, IllegalAccessException {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        temporaryFolder.create();
+        String translationsPath = temporaryFolder.getRoot().getAbsolutePath();
+        return setTranslationPath(bahmniFormService, translationsPath);
+    }
+
+    private static String setTranslationPath(BahmniFormService bahmniFormService, String translationsPath) throws NoSuchFieldException, IllegalAccessException {
+        Field field = bahmniFormService.getClass().getDeclaredField("FORM_TRANSLATIONS_PATH");
+        field.setAccessible(true);
+        field.set(bahmniFormService, translationsPath);
+        return translationsPath;
     }
 }
