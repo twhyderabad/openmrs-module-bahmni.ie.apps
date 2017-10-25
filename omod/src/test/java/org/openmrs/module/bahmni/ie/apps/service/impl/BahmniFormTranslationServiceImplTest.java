@@ -64,6 +64,16 @@ public class BahmniFormTranslationServiceImplTest {
         List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", null);
         assertEquals(2, formTranslations.size());
     }
+
+    @Test
+    public void shouldThrowAPIExceptionIfTranslationFileIsNotPresentForGivenFormNameAndVersion() throws Exception {
+        BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+        setTranslationPath(bahmniFormTranslationService, "/var/www/blah/blah");
+        expectedException.expect(APIException.class);
+        expectedException.expectMessage("Unable to find translation file for test_form_v1");
+        bahmniFormTranslationService.getFormTranslations("test_form","1", "en");
+    }
+
     @Test
     public void shouldSaveTranslationsOfGivenForm() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
@@ -115,7 +125,6 @@ public class BahmniFormTranslationServiceImplTest {
         expectedException.expectMessage("Invalid Parameters");
         bahmniFormTranslationService.saveFormTranslation(formTranslation);
     }
-
 
 
     private static FormTranslation createFormTranslation(String locale, String version, String formName) {

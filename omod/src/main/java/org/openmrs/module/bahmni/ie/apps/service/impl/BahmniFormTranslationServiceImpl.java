@@ -18,8 +18,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 @Component
 public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService implements BahmniFormTranslationService {
 
-
-    private static String FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations/";
+    private static String FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
 
     @Override
     public List<FormTranslation> getFormTranslations(String formName, String formVersion, String locale) {
@@ -34,21 +33,24 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
         }
         String formName = formTranslation.getFormName();
         String version = formTranslation.getVersion();
-        File translationFile = new File(String.format("%s/%s_%s.json", FORM_TRANSLATIONS_PATH, formName, version));
+        File translationFile = new File(getFileName(formName, version));
         translationFile.getParentFile().mkdirs();
         saveTranslationsToFile(formTranslation, translationFile);
 
         return formTranslation;
     }
 
+    private String getFileName(String formName, String version) {
+        return String.format("%s/%s_%s.json", FORM_TRANSLATIONS_PATH, formName, version);
+    }
+
     private void saveTranslationsToFile(FormTranslation formTranslation, File translationFile) {
         try {
-            String fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile) : "";
             JSONObject translations = new JSONObject();
             translations.put("labels", new JSONObject(formTranslation.getLabels()));
             translations.put("concepts", new JSONObject(formTranslation.getConcepts()));
 
-            JSONObject translationsJson = isNotEmpty(fileContent) ? new JSONObject(fileContent) : new JSONObject();
+            JSONObject translationsJson = getTranslations(translationFile);
             translationsJson.put(formTranslation.getLocale(), translations);
 
             FileUtils.writeStringToFile(translationFile, translationsJson.toString());
@@ -83,15 +85,20 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 
 
     private JSONObject getTranslationJsonFromFile(String formName, String formVersion) {
-        JSONObject jsonObject = null;
         try {
-            File translationFile = new File(String.format("%s/%s_%s.json", FORM_TRANSLATIONS_PATH, formName, formVersion));
-            String fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile) : "";
-            jsonObject = isNotEmpty(fileContent) ? new JSONObject(fileContent) : new JSONObject();
+            File translationFile = new File(getFileName(formName, formVersion));
+            if(!translationFile.exists())
+                throw new APIException(String.format("Unable to find translation file for %s_v%s", formName, formVersion));
+            return getTranslations(translationFile);
         } catch (IOException e) {
             e.printStackTrace();
+            throw new APIException(e.getMessage(), e);
         }
-        return jsonObject;
+    }
+
+    private JSONObject getTranslations(File translationFile) throws IOException {
+        String fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile) : "";
+        return isNotEmpty(fileContent) ? new JSONObject(fileContent) : new JSONObject();
     }
 
 }
