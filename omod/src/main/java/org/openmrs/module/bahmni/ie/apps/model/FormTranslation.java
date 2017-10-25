@@ -1,7 +1,10 @@
 package org.openmrs.module.bahmni.ie.apps.model;
 
 
+import org.json.JSONObject;
+
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FormTranslation {
     private String locale;
@@ -48,5 +51,20 @@ public class FormTranslation {
 
     public void setLabels(Map<String, String> labels) {
         this.labels = labels;
+    }
+
+    public static FormTranslation parse(JSONObject jsonObject, String locale) {
+        JSONObject translations = (JSONObject) jsonObject.get(locale);
+        FormTranslation formTranslation = new FormTranslation();
+
+        JSONObject conceptsObj = (JSONObject) translations.get("concepts");
+        JSONObject labelsObj = (JSONObject) translations.get("labels");
+        Map<String, String> concepts = conceptsObj.keySet().stream().collect(Collectors.toMap(k -> k, conceptsObj::getString));
+        Map<String, String> labels = labelsObj.keySet().stream().collect(Collectors.toMap(k -> k, labelsObj::getString));
+
+        formTranslation.setLocale(locale);
+        formTranslation.setConcepts(concepts);
+        formTranslation.setLabels(labels);
+        return formTranslation;
     }
 }

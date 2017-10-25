@@ -3,7 +3,6 @@ package org.openmrs.module.bahmni.ie.apps.service;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
-import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 
 import java.util.List;
 
@@ -12,6 +11,4 @@ public interface BahmniFormService extends OpenmrsService{
     BahmniForm publish(String formUuid);
     List<BahmniForm> getAllLatestPublishedForms(boolean includeRetired, String encounterUuid);
     List<BahmniForm> getAllForms();
-
-    FormTranslation saveTranslation(FormTranslation formTranslation);
 }

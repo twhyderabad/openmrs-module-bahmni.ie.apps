@@ -4,6 +4,7 @@ import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
 import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
+import org.openmrs.module.bahmni.ie.apps.service.BahmniFormTranslationService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +18,26 @@ public class BahmniFormController extends BaseRestController {
     private final String baseUrl = "/rest/" + RestConstants.VERSION_1 + "/bahmniie/form";
 
     private BahmniFormService bahmniFormService;
+    private BahmniFormTranslationService bahmniFormTranslationService;
 
     @Autowired
-    public BahmniFormController(BahmniFormService bahmniFormService) {
+    public BahmniFormController(BahmniFormService bahmniFormService, BahmniFormTranslationService bahmniFormTranslationService) {
         this.bahmniFormService = bahmniFormService;
+        this.bahmniFormTranslationService = bahmniFormTranslationService;
     }
 
     @RequestMapping(value = baseUrl+"/saveTranslation", method = RequestMethod.POST)
     @ResponseBody
     public FormTranslation FormTranslation(@RequestBody FormTranslation formTranslation){
-        return bahmniFormService.saveTranslation(formTranslation);
+        return bahmniFormTranslationService.saveFormTranslation(formTranslation);
+    }
+
+    @RequestMapping(value = baseUrl + "/translations", method = RequestMethod.GET )
+    @ResponseBody
+    public List<FormTranslation> getTranslations(@RequestParam(value = "formName") String formName,
+                                            @RequestParam(value = "formVersion") String formVersion,
+                                                 @RequestParam(value = "locale", required = false) String locale) {
+        return bahmniFormTranslationService.getFormTranslations(formName, formVersion, locale);
     }
 
     @RequestMapping(value = baseUrl + "/publish", method = RequestMethod.POST )
