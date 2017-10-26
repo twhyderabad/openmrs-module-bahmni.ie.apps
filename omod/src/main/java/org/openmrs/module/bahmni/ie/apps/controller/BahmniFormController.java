@@ -2,6 +2,7 @@ package org.openmrs.module.bahmni.ie.apps.controller;
 
 import org.openmrs.module.bahmni.ie.apps.model.BahmniForm;
 import org.openmrs.module.bahmni.ie.apps.model.BahmniFormResource;
+import org.openmrs.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormTranslationService;
@@ -38,6 +39,14 @@ public class BahmniFormController extends BaseRestController {
                                             @RequestParam(value = "formVersion") String formVersion,
                                                  @RequestParam(value = "locale", required = false) String locale) {
         return bahmniFormTranslationService.getFormTranslations(formName, formVersion, locale);
+    }
+
+    @RequestMapping(value = baseUrl + "/translate", method = RequestMethod.GET )
+    @ResponseBody
+    public FormFieldTranslations translate(@RequestParam(value = "formName") String formName,
+                                           @RequestParam(value = "formVersion") String formVersion,
+                                           @RequestParam(value = "locale") String locale) {
+        return bahmniFormTranslationService.setNewTranslationsForForm(locale, formName  , formVersion);
     }
 
     @RequestMapping(value = baseUrl + "/publish", method = RequestMethod.POST )
