@@ -50,7 +50,7 @@ public class BahmniFormTranslationServiceImplTest {
     ExpectedException expectedException = ExpectedException.none();
 
     @Test
-    public void shouldFetchTranslationsForGivenLocale() throws Exception {
+        public void shouldFetchTranslationsForGivenLocale() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         createTempFolder(bahmniFormTranslationService);
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
@@ -148,13 +148,13 @@ public class BahmniFormTranslationServiceImplTest {
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
 
         assertEquals("fr", formFieldTranslations.getLocale());
-        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConceptsWithAllName();
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
         assertEquals(2, conceptsWithAllName.values().size());
         assertEquals(3, conceptsWithAllName.get("TEMPERATURE_1").size());
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").containsAll(Arrays.asList("Temperature fr", "Temp short", "TEMPERATURE")));
         assertFalse(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE DATA"));
-        assertEquals("LABEL_2", formFieldTranslations.getLabelsWithAllName().get("LABEL_2"));
+        assertEquals("LABEL_2", formFieldTranslations.getLabels().get("LABEL_2"));
         assertEquals("Temperature desc", conceptsWithAllName.get("TEMPERATURE_1_DESC").get(0));
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
     }
@@ -170,12 +170,12 @@ public class BahmniFormTranslationServiceImplTest {
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("es", "test_form", "1");
 
         assertEquals("es", formFieldTranslations.getLocale());
-        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConceptsWithAllName();
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
         assertEquals(2, conceptsWithAllName.values().size());
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1").size());
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE_1"));
 
-        assertEquals("LABEL_2", formFieldTranslations.getLabelsWithAllName().get("LABEL_2"));
+        assertEquals("LABEL_2", formFieldTranslations.getLabels().get("LABEL_2"));
         assertEquals("TEMPERATURE_1_DESC", conceptsWithAllName.get("TEMPERATURE_1_DESC").get(0));
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
     }
@@ -190,16 +190,56 @@ public class BahmniFormTranslationServiceImplTest {
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
 
-        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConceptsWithAllName();
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
         assertEquals("fr", formFieldTranslations.getLocale());
         assertEquals(2, conceptsWithAllName.values().size());
         assertEquals(4, conceptsWithAllName.get("TEMPERATURE_1").size());
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").containsAll(Arrays.asList("Temperature fr", "Temp short", "TEMPERATURE", "Temperature")));
 
-        assertEquals("LABEL_2", formFieldTranslations.getLabelsWithAllName().get("LABEL_2"));
+        assertEquals("Vitals", formFieldTranslations.getLabels().get("LABEL_2"));
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1_DESC").containsAll(Arrays.asList("Temperature desc", "Temperature")));
         assertEquals(2, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
+    }
+
+    @Test
+    public void shouldNotAddKeysAsValueForConceptIfAtLeastOneTranslationForConceptNameFound() throws Exception {
+        setupConceptMocks("pt");
+        BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+        createTempFolder(bahmniFormTranslationService);
+        FormTranslation formTranslationEn = createFormTranslation("pt", "1", "test_form");
+        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+
+        FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("pt", "test_form", "1");
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
+
+        assertEquals("pt", formFieldTranslations.getLocale());
+        assertEquals(2, conceptsWithAllName.values().size());
+        ArrayList<String> temperature_1 = conceptsWithAllName.get("TEMPERATURE_1");
+        assertEquals(2, temperature_1.size());
+        assertTrue(temperature_1.containsAll(Arrays.asList("TEMPERATURE","Temperature")));
+        assertFalse(temperature_1.contains("TEMPERATURE_1"));
+
+        assertEquals("Vitals", formFieldTranslations.getLabels().get("LABEL_2"));
+        assertTrue(conceptsWithAllName.get("TEMPERATURE_1_DESC").contains("Temperature"));
+        assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
+    }
+
+    @Test
+    public void shouldSetKeyAsValueIfConceptIsNotPresentForGivenLocale() throws Exception {
+        setupConceptMocks("en");
+        when(conceptService.getConceptsByName("TEMPERATURE")).thenReturn(new ArrayList<>());
+        BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+        createTempFolder(bahmniFormTranslationService);
+        FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
+        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+
+
+        FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
+
+        assertTrue(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE_1"));
+
     }
 
     private static FormTranslation createFormTranslation(String locale, String version, String formName) {
@@ -239,15 +279,18 @@ public class BahmniFormTranslationServiceImplTest {
 
         ConceptName conceptName = new ConceptName("TEMPERATURE", Locale.ENGLISH);
         ConceptName conceptNamefr = new ConceptName("TEMPERATURE", Locale.FRENCH);
+        ConceptName conceptNamept = new ConceptName("TEMPERATURE", Locale.forLanguageTag("pt"));
         ConceptName conceptShortName = new ConceptName("Temp short", Locale.FRENCH);
         ConceptName conceptNameFrench = new ConceptName("Temperature fr", Locale.FRENCH);
         ConceptDescription conceptDescription = new ConceptDescription("Temperature desc", Locale.FRENCH);
+        ConceptDescription conceptDescriptionEn = new ConceptDescription("Temperature desc", Locale.ENGLISH);
         Concept concept = new Concept();
         conceptName.setConceptNameType(ConceptNameType.FULLY_SPECIFIED);
         conceptNamefr.setConceptNameType(ConceptNameType.FULLY_SPECIFIED);
-        concept.setNames(Arrays.asList(conceptName, conceptNameFrench, conceptShortName, conceptNamefr));
+        concept.setNames(Arrays.asList(conceptName, conceptNameFrench, conceptShortName, conceptNamefr, conceptNamept));
         concept.setShortName(conceptShortName);
         concept.addDescription(conceptDescription);
+        concept.addDescription(conceptDescriptionEn);
 
         ConceptName conceptNameOne = new ConceptName("TEMPERATURE DATA", Locale.ENGLISH);
         ConceptName conceptNamefrOne = new ConceptName("TEMPERATURE DATA", Locale.FRENCH);

@@ -58,18 +58,20 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
     public FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version) {
         String defaultLocale = Context.getAdministrationService().getGlobalProperty("default_locale");
         FormTranslation defaultTranslation = mapTranslations(defaultLocale, formName, version).get(0);
-        HashMap<String, ArrayList<String>> conceptWithAllNames = getTranslationsForConcepts(Locale.forLanguageTag(locale), defaultTranslation.getConcepts(), Locale.forLanguageTag(defaultLocale));
 
-        FormFieldTranslations formFieldTranslations = new FormFieldTranslations();
+        HashMap<String, ArrayList<String>> translatedConceptNames =
+                getTranslationsForConcepts(Locale.forLanguageTag(locale), defaultTranslation.getConcepts(), Locale.forLanguageTag(defaultLocale));
+        Map<String, String> translatedLabels = getLabelTranslations(locale, defaultLocale, defaultTranslation.getLabels());
 
-        formFieldTranslations.setLabelsWithAllName(defaultTranslation.getLabels().entrySet()
+        return new FormFieldTranslations(translatedConceptNames, translatedLabels, locale);
+    }
+
+    private Map<String, String> getLabelTranslations(String locale, String defaultLocale, Map<String, String> labels) {
+        if (defaultLocale.equals(locale))
+            return labels;
+        return labels.entrySet()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getKey)));
-
-        formFieldTranslations.setConceptsWithAllName(conceptWithAllNames);
-        formFieldTranslations.setLocale(locale);
-
-        return formFieldTranslations;
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getKey));
     }
 
     private HashMap<String, ArrayList<String>> getTranslationsForConcepts(Locale locale, Map<String, String> conceptTranslations, Locale defaultLocale) {
@@ -90,6 +92,9 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
             translations.addAll(getConceptNames(locale, conceptService, key));
         else if (key.matches(String.format(".*%s", DESC_TRANS_KEY_PATTERN)))
             translations.addAll(getDescriptions(locale, conceptService, key));
+
+        if (translations.isEmpty())
+            translations.add(key);
         return translations;
     }
 
@@ -159,14 +164,12 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
     private HashSet<String> getDescriptions(Locale locale, ConceptService conceptService, String key) {
         HashSet<String> descriptions = new HashSet<>();
         Concept concept = getConceptByName(conceptService, getDescConceptName(key));
-        String description = key;
         if (concept != null) {
-            ConceptDescription conceptDescription = concept.getDescription(locale);
+            ConceptDescription conceptDescription = concept.getDescription(locale, true);
             if (conceptDescription != null) {
-                description = conceptDescription.getDescription();
+                descriptions.add(conceptDescription.getDescription());
             }
         }
-        descriptions.add(description);
         return descriptions;
     }
 
@@ -176,23 +179,19 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 
         Concept concept = getConceptByName(conceptService, conceptName);
         if (concept != null) {
-            Collection<ConceptName> synonyms = concept.getSynonyms(locale);
-            conceptNames.add(getTranslatedValue(locale, key, concept.getName(locale)));
-            conceptNames.add(getTranslatedValue(locale, key, concept.getShortNameInLocale(locale)));
+            addTranslatedName(conceptNames, concept.getName(locale, true));
+            addTranslatedName(conceptNames, concept.getShortNameInLocale(locale));
 
-            if (!synonyms.isEmpty()) {
+            Collection<ConceptName> synonyms = concept.getSynonyms(locale);
+            if (!synonyms.isEmpty())
                 conceptNames.addAll(synonyms.stream().map(ConceptName::getName).collect(Collectors.toList()));
-            }
         }
         return conceptNames;
     }
 
-    private String getTranslatedValue(Locale locale, String key, ConceptName conceptName) {
-        return isTranslationAvailable(locale, conceptName) ? conceptName.getName() : key;
-    }
-
-    private boolean isTranslationAvailable(Locale locale, ConceptName conceptName) {
-        return conceptName != null && conceptName.getLocale().equals(locale);
+    private void addTranslatedName(HashSet<String> conceptNames, ConceptName conceptName) {
+        if (conceptName != null)
+            conceptNames.add(conceptName.getName());
     }
 
     private Concept getConceptByName(ConceptService conceptService, String conceptName) {

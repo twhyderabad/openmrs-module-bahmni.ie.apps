@@ -1,27 +1,37 @@
 package org.openmrs.module.bahmni.ie.apps.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class FormFieldTranslations {
-    private Map<String, ArrayList<String>> conceptsWithAllName;
-    private Map<String, String> labelsWithAllName;
+    private Map<String, ArrayList<String>> concepts;
+    private Map<String, String> labels;
     private String locale;
 
-    public Map<String, ArrayList<String>> getConceptsWithAllName() {
-        return conceptsWithAllName;
+    public FormFieldTranslations(Map<String, ArrayList<String>> concepts, Map<String, String> labels, String locale) {
+        this.concepts = concepts;
+        this.labels = labels;
+        this.locale = locale;
     }
 
-    public void setConceptsWithAllName(Map<String, ArrayList<String>> conceptsWithAllName) {
-        this.conceptsWithAllName = conceptsWithAllName;
+    public FormFieldTranslations() {
     }
 
-    public Map<String, String> getLabelsWithAllName() {
-        return labelsWithAllName;
+    public Map<String, ArrayList<String>> getConcepts() {
+        return concepts;
     }
 
-    public void setLabelsWithAllName(Map<String, String> labelsWithAllName) {
-        this.labelsWithAllName = labelsWithAllName;
+    public void setConcepts(Map<String, ArrayList<String>> concepts) {
+        this.concepts = concepts;
+    }
+
+    public Map<String, String> getLabels() {
+        return labels;
+    }
+
+    public void setLabels(Map<String, String> labels) {
+        this.labels = labels;
     }
 
     public String getLocale() {
