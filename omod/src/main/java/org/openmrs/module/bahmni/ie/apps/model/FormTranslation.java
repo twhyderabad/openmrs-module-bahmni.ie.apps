@@ -1,6 +1,5 @@
 package org.openmrs.module.bahmni.ie.apps.model;
 
-
 import org.json.JSONObject;
 
 import java.util.Map;
@@ -53,9 +52,13 @@ public class FormTranslation {
         this.labels = labels;
     }
 
+    public boolean isEmpty() {
+        return concepts == null && labels == null;
+    }
+
     public static FormTranslation parse(JSONObject jsonObject, String locale) {
         FormTranslation formTranslation = new FormTranslation();
-        if(!jsonObject.has(locale))
+        if (!jsonObject.has(locale))
             return formTranslation;
         JSONObject translations = (JSONObject) jsonObject.get(locale);
 
