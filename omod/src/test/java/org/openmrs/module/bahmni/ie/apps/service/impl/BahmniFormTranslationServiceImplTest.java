@@ -1,11 +1,13 @@
 package org.openmrs.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
@@ -24,7 +26,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 
@@ -49,10 +51,16 @@ public class BahmniFormTranslationServiceImplTest {
     @Rule
     ExpectedException expectedException = ExpectedException.none();
 
+    @Before
+    public void setUp() throws Exception {
+        PowerMockito.mockStatic(Context.class);
+        when(Context.getAdministrationService()).thenReturn(administrationService);
+    }
+
     @Test
-        public void shouldFetchTranslationsForGivenLocale() throws Exception {
+    public void shouldFetchTranslationsForGivenLocale() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
@@ -66,7 +74,7 @@ public class BahmniFormTranslationServiceImplTest {
     @Test
     public void shouldFetchAllTranslationsIfNoLocaleGiven() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
@@ -79,7 +87,7 @@ public class BahmniFormTranslationServiceImplTest {
     @Test
     public void shouldThrowAPIExceptionIfTranslationFileIsNotPresentForGivenFormNameAndVersion() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        setTranslationPath(bahmniFormTranslationService, "/var/www/blah/blah");
+        setTranslationPath("/var/www/blah/blah");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Unable to find translation file for test_form_v1");
         bahmniFormTranslationService.getFormTranslations("test_form", "1", "en");
@@ -88,7 +96,7 @@ public class BahmniFormTranslationServiceImplTest {
     @Test
     public void shouldSaveTranslationsOfGivenForm() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        String tempTranslationsPath = createTempFolder(bahmniFormTranslationService);
+        String tempTranslationsPath = createTempFolder();
         FormTranslation formTranslation = createFormTranslation("en", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslation);
         String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
@@ -100,7 +108,7 @@ public class BahmniFormTranslationServiceImplTest {
     @Test
     public void shouldThrowAPIExceptionIfFormNameIsNotPresent() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslation = createFormTranslation("en", "1", null);
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Invalid Parameters");
@@ -111,7 +119,7 @@ public class BahmniFormTranslationServiceImplTest {
     public void shouldThrowAPIExceptionIfItUnableToSaveTranslations() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         FormTranslation formTranslation = createFormTranslation("en", "1", "test_form");
-        setTranslationPath(bahmniFormTranslationService, "/var/www/blah/blah");
+        setTranslationPath("/var/www/blah/blah");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("/test_form_1.json' could not be created");
         bahmniFormTranslationService.saveFormTranslation(formTranslation);
@@ -120,7 +128,7 @@ public class BahmniFormTranslationServiceImplTest {
     @Test
     public void shouldThrowAPIExceptionIfFormVersionIsNotPresent() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslation = createFormTranslation("en", null, "test_form");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Invalid Parameters");
@@ -130,7 +138,7 @@ public class BahmniFormTranslationServiceImplTest {
     @Test
     public void shouldThrowAPIExceptionIfLocaleIsNotPresent() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslation = createFormTranslation(null, "1", "test_form");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Invalid Parameters");
@@ -141,7 +149,7 @@ public class BahmniFormTranslationServiceImplTest {
     public void shouldGenerateTranslationsForGivenLocale() throws Exception {
         setupConceptMocks("en");
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
 
@@ -163,7 +171,7 @@ public class BahmniFormTranslationServiceImplTest {
     public void shouldPutTranslationKeysAsTranslatedValueIfNoTranslationAvailableForGivenLocale() throws Exception {
         setupConceptMocks("en");
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
 
@@ -184,7 +192,7 @@ public class BahmniFormTranslationServiceImplTest {
     public void shouldAddTranslationsForDefaultLocale() throws Exception {
         setupConceptMocks("fr");
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
 
@@ -206,7 +214,7 @@ public class BahmniFormTranslationServiceImplTest {
     public void shouldNotAddKeysAsValueForConceptIfAtLeastOneTranslationForConceptNameFound() throws Exception {
         setupConceptMocks("pt");
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("pt", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
 
@@ -217,7 +225,7 @@ public class BahmniFormTranslationServiceImplTest {
         assertEquals(2, conceptsWithAllName.values().size());
         ArrayList<String> temperature_1 = conceptsWithAllName.get("TEMPERATURE_1");
         assertEquals(2, temperature_1.size());
-        assertTrue(temperature_1.containsAll(Arrays.asList("TEMPERATURE","Temperature")));
+        assertTrue(temperature_1.containsAll(Arrays.asList("TEMPERATURE", "Temperature")));
         assertFalse(temperature_1.contains("TEMPERATURE_1"));
 
         assertEquals("Vitals", formFieldTranslations.getLabels().get("LABEL_2"));
@@ -230,16 +238,14 @@ public class BahmniFormTranslationServiceImplTest {
         setupConceptMocks("en");
         when(conceptService.getConceptsByName("TEMPERATURE")).thenReturn(new ArrayList<>());
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-        createTempFolder(bahmniFormTranslationService);
+        createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
-
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
         Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE_1"));
-
     }
 
     private static FormTranslation createFormTranslation(String locale, String version, String formName) {
@@ -257,24 +263,20 @@ public class BahmniFormTranslationServiceImplTest {
         return formTranslation;
     }
 
-    private static String createTempFolder(BahmniFormTranslationService bahmniFormTranslationService) throws IOException, NoSuchFieldException, IllegalAccessException {
+    private String createTempFolder() throws IOException, NoSuchFieldException, IllegalAccessException {
         TemporaryFolder temporaryFolder = new TemporaryFolder();
         temporaryFolder.create();
         String translationsPath = temporaryFolder.getRoot().getAbsolutePath();
-        return setTranslationPath(bahmniFormTranslationService, translationsPath);
+        return setTranslationPath(translationsPath);
     }
 
-    private static String setTranslationPath(BahmniFormTranslationService bahmniFormTranslationService, String translationsPath) throws NoSuchFieldException, IllegalAccessException {
-        Field field = bahmniFormTranslationService.getClass().getDeclaredField("FORM_TRANSLATIONS_PATH");
-        field.setAccessible(true);
-        field.set(bahmniFormTranslationService, translationsPath);
+    private String setTranslationPath(String translationsPath) throws NoSuchFieldException, IllegalAccessException {
+        when(administrationService.getGlobalProperty(eq("bahmni.formTranslations.directory"), Matchers.anyString())).thenReturn(translationsPath);
         return translationsPath;
     }
 
     private void setupConceptMocks(String defaultLocale) {
-        PowerMockito.mockStatic(Context.class);
         when(Context.getConceptService()).thenReturn(conceptService);
-        when(Context.getAdministrationService()).thenReturn(administrationService);
         when(Context.getLocale()).thenReturn(Locale.forLanguageTag(defaultLocale));
 
         ConceptName conceptName = new ConceptName("TEMPERATURE", Locale.ENGLISH);

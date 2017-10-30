@@ -32,5 +32,13 @@
         </description>
     </globalProperty>
 
+    <globalProperty>
+        <property>bahmni.formTranslations.directory</property>
+        <defaultValue>/var/www/bahmni_config/openmrs/apps/forms/translations</defaultValue>
+        <description>
+            Filesystem path for saving the bahmni forms translations
+        </description>
+    </globalProperty>
+
 </module>
 
