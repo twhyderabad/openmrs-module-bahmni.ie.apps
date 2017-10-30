@@ -31,7 +31,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 @Component
 public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService implements BahmniFormTranslationService {
 
-    private static String FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
+    private static final String DEFAULT_FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
     private final String CONCEPT_TRANS_KEY_PATTERN = "_[0-9]+$";
     private final String DESC_TRANS_KEY_PATTERN = "_[0-9]+_DESC$";
 
@@ -99,7 +99,8 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
     }
 
     private String getFileName(String formName, String version) {
-        return String.format("%s/%s_%s.json", FORM_TRANSLATIONS_PATH, formName, version);
+        String fromTranslationsPath = Context.getAdministrationService().getGlobalProperty("bahmni.formTranslations.directory", DEFAULT_FORM_TRANSLATIONS_PATH);
+        return String.format("%s/%s_%s.json", fromTranslationsPath, formName, version);
     }
 
     private void saveTranslationsToFile(FormTranslation formTranslation, File translationFile) {
