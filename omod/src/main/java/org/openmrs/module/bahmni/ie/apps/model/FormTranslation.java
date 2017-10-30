@@ -54,8 +54,10 @@ public class FormTranslation {
     }
 
     public static FormTranslation parse(JSONObject jsonObject, String locale) {
-        JSONObject translations = (JSONObject) jsonObject.get(locale);
         FormTranslation formTranslation = new FormTranslation();
+        if(!jsonObject.has(locale))
+            return formTranslation;
+        JSONObject translations = (JSONObject) jsonObject.get(locale);
 
         JSONObject conceptsObj = (JSONObject) translations.get("concepts");
         JSONObject labelsObj = (JSONObject) translations.get("labels");
