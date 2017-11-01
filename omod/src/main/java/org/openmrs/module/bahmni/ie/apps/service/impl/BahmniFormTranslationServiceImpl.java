@@ -17,14 +17,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -58,44 +53,51 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
     public FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version) {
         String defaultLocale = Context.getAdministrationService().getGlobalProperty("default_locale");
         FormTranslation defaultTranslation = mapTranslations(defaultLocale, formName, version).get(0);
+        FormTranslation localeTranslation = mapTranslations(locale, formName, version).get(0);
+        defaultTranslation = localeTranslation.isEmpty() ? defaultTranslation : localeTranslation;
 
         HashMap<String, ArrayList<String>> translatedConceptNames =
-                getTranslationsForConcepts(Locale.forLanguageTag(locale), defaultTranslation.getConcepts(), Locale.forLanguageTag(defaultLocale));
-        Map<String, String> translatedLabels = getLabelTranslations(locale, defaultLocale, defaultTranslation.getLabels());
+                getTranslationsForConcepts(Locale.forLanguageTag(locale), defaultTranslation.getConcepts(), Locale.forLanguageTag(defaultTranslation.getLocale()));
+        Map<String, ArrayList<String>> translatedLabels = getLabelTranslations(locale, defaultTranslation.getLocale(), defaultTranslation.getLabels());
 
         return new FormFieldTranslations(translatedConceptNames, translatedLabels, locale);
     }
 
-    private Map<String, String> getLabelTranslations(String locale, String defaultLocale, Map<String, String> labels) {
+    private Map<String, ArrayList<String>> getLabelTranslations(String locale, String defaultLocale, Map<String, String> labels) {
+        Stream<Map.Entry<String, String>> stream = labels.entrySet().stream();
         if (defaultLocale.equals(locale))
-            return labels;
-        return labels.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getKey));
+            return stream.collect(Collectors.toMap(Map.Entry::getKey, label -> new ArrayList<>(Collections.singletonList(label.getValue()))));
+        return stream.collect(Collectors.toMap(Map.Entry::getKey, label -> new ArrayList<>(Collections.singletonList(label.getKey()))));
     }
 
     private HashMap<String, ArrayList<String>> getTranslationsForConcepts(Locale locale, Map<String, String> conceptTranslations, Locale defaultLocale) {
         HashMap<String, ArrayList<String>> conceptWithAllNames = new HashMap<>();
         ConceptService conceptService = Context.getConceptService();
         for (String key : conceptTranslations.keySet()) {
-            HashSet<String> translations = getLocaleTranslations(locale, conceptTranslations, defaultLocale, conceptService, key);
-            conceptWithAllNames.put(key, new ArrayList<>(translations));
+            ArrayList<String> translations = getLocaleTranslations(locale, conceptTranslations, defaultLocale, conceptService, key);
+            conceptWithAllNames.put(key, translations);
         }
         return conceptWithAllNames;
     }
 
-    private HashSet<String> getLocaleTranslations(Locale locale, Map<String, String> conceptTranslations, Locale defaultLocale, ConceptService conceptService, String key) {
+    private ArrayList<String> getLocaleTranslations(Locale locale, Map<String, String> conceptTranslations, Locale defaultLocale, ConceptService conceptService, String key) {
         HashSet<String> translations = new HashSet<>();
-        if (locale.equals(defaultLocale))
-            translations.add(conceptTranslations.get(key));
+
         if (key.matches(String.format(".*%s", CONCEPT_TRANS_KEY_PATTERN)))
             translations.addAll(getConceptNames(locale, conceptService, key));
         else if (key.matches(String.format(".*%s", DESC_TRANS_KEY_PATTERN)))
             translations.addAll(getDescriptions(locale, conceptService, key));
 
+        if (locale.equals(defaultLocale)) {
+            ArrayList<String> translationsAsList = new ArrayList<>(translations);
+            translationsAsList.remove(conceptTranslations.get(key));
+            translationsAsList.add(0, conceptTranslations.get(key));
+            return translationsAsList;
+        }
+
         if (translations.isEmpty())
             translations.add(key);
-        return translations;
+        return new ArrayList<>(translations);
     }
 
     private String getFileName(String formName, String version) {

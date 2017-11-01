@@ -26,12 +26,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.eq;
@@ -162,7 +157,7 @@ public class BahmniFormTranslationServiceImplTest {
         assertEquals(3, conceptsWithAllName.get("TEMPERATURE_1").size());
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").containsAll(Arrays.asList("Temperature fr", "Temp short", "TEMPERATURE")));
         assertFalse(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE DATA"));
-        assertEquals("LABEL_2", formFieldTranslations.getLabels().get("LABEL_2"));
+        assertEquals(new ArrayList<>(Collections.singletonList("LABEL_2")), formFieldTranslations.getLabels().get("LABEL_2"));
         assertEquals("Temperature desc", conceptsWithAllName.get("TEMPERATURE_1_DESC").get(0));
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
     }
@@ -183,7 +178,7 @@ public class BahmniFormTranslationServiceImplTest {
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1").size());
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE_1"));
 
-        assertEquals("LABEL_2", formFieldTranslations.getLabels().get("LABEL_2"));
+        assertEquals(new ArrayList<>(Collections.singletonList("LABEL_2")), formFieldTranslations.getLabels().get("LABEL_2"));
         assertEquals("TEMPERATURE_1_DESC", conceptsWithAllName.get("TEMPERATURE_1_DESC").get(0));
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
     }
@@ -205,10 +200,61 @@ public class BahmniFormTranslationServiceImplTest {
         assertEquals(4, conceptsWithAllName.get("TEMPERATURE_1").size());
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1").containsAll(Arrays.asList("Temperature fr", "Temp short", "TEMPERATURE", "Temperature")));
 
-        assertEquals("Vitals", formFieldTranslations.getLabels().get("LABEL_2"));
+        assertEquals(new ArrayList<>(Collections.singletonList("Vitals")), formFieldTranslations.getLabels().get("LABEL_2"));
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1_DESC").containsAll(Arrays.asList("Temperature desc", "Temperature")));
         assertEquals(2, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
     }
+
+    @Test
+    public void shouldAddAlreadySavedTranslationsForGivenLocale() throws Exception {
+        setupConceptMocks("en");
+        BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+        createTempFolder();
+        FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
+        ((HashMap) formTranslationEn.getConcepts()).put("TEMPERATURE_1", "Translated Temperature");
+        System.out.println(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+
+        FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
+
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
+
+        assertEquals("fr", formFieldTranslations.getLocale());
+        assertEquals(2, conceptsWithAllName.values().size());
+        assertEquals(4, conceptsWithAllName.get("TEMPERATURE_1").size());
+        assertEquals("Translated Temperature", conceptsWithAllName.get("TEMPERATURE_1").get(0));
+        assertTrue(conceptsWithAllName.get("TEMPERATURE_1").containsAll(Arrays.asList("Translated Temperature", "Temperature fr", "Temp short", "TEMPERATURE")));
+
+        assertEquals(new ArrayList<>(Collections.singletonList("Vitals")), formFieldTranslations.getLabels().get("LABEL_2"));
+        assertTrue(conceptsWithAllName.get("TEMPERATURE_1_DESC").containsAll(Arrays.asList("Temperature desc", "Temperature")));
+        assertEquals(2, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
+    }
+
+    @Test
+    public void shouldAddAlreadySavedTranslationsForDefaultLocale() throws Exception {
+        setupConceptMocks("fr");
+        BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+        createTempFolder();
+        FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
+//        ((HashMap) formTranslationEn.getConcepts()).put("TEMPERATURE_1", "Translated Temperature");
+        System.out.println(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+
+        FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
+
+        Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
+
+        assertEquals("fr", formFieldTranslations.getLocale());
+        assertEquals(2, conceptsWithAllName.values().size());
+        assertEquals(4, conceptsWithAllName.get("TEMPERATURE_1").size());
+        assertEquals("Temperature", conceptsWithAllName.get("TEMPERATURE_1").get(0));
+        assertTrue(conceptsWithAllName.get("TEMPERATURE_1").containsAll(Arrays.asList("Temperature", "Temperature fr", "Temp short", "TEMPERATURE")));
+
+        assertEquals(new ArrayList<>(Collections.singletonList("Vitals")), formFieldTranslations.getLabels().get("LABEL_2"));
+        assertTrue(conceptsWithAllName.get("TEMPERATURE_1_DESC").containsAll(Arrays.asList("Temperature desc", "Temperature")));
+        assertEquals(2, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
+    }
+
 
     @Test
     public void shouldNotAddKeysAsValueForConceptIfAtLeastOneTranslationForConceptNameFound() throws Exception {
@@ -228,7 +274,7 @@ public class BahmniFormTranslationServiceImplTest {
         assertTrue(temperature_1.containsAll(Arrays.asList("TEMPERATURE", "Temperature")));
         assertFalse(temperature_1.contains("TEMPERATURE_1"));
 
-        assertEquals("Vitals", formFieldTranslations.getLabels().get("LABEL_2"));
+        assertEquals(new ArrayList<>(Collections.singletonList("Vitals")), formFieldTranslations.getLabels().get("LABEL_2"));
         assertTrue(conceptsWithAllName.get("TEMPERATURE_1_DESC").contains("Temperature"));
         assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
     }

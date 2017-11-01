@@ -4,7 +4,7 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class FormTranslationTest {
     @Before
@@ -37,5 +37,21 @@ public class FormTranslationTest {
         assertEquals(null, formTranslation.getLabels());
         assertEquals(null, formTranslation.getConcepts());
         assertEquals(null, formTranslation.getLocale());
+    }
+
+    @Test
+    public void shouldReturnTrueIfItsEmpty() throws Exception {
+        FormTranslation formTranslation = new FormTranslation();
+        assertTrue(formTranslation.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnFalseIfItsNotEmpty() throws Exception {
+        String json = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature Desc\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+        JSONObject translation = new JSONObject(json);
+
+        FormTranslation formTranslation = FormTranslation.parse(translation, "en");
+
+        assertFalse(formTranslation.isEmpty());
     }
 }
