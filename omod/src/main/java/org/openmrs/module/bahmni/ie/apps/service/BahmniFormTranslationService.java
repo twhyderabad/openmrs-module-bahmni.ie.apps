@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface BahmniFormTranslationService extends OpenmrsService {
     List<FormTranslation> getFormTranslations(String formName, String formVersion, String locale);
-    FormTranslation saveFormTranslation(FormTranslation formTranslation);
+    List<FormTranslation> saveFormTranslation(List<FormTranslation> formTranslation);
 
     FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version);
 }

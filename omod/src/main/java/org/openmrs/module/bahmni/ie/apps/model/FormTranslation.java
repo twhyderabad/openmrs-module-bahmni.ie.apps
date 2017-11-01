@@ -52,10 +52,6 @@ public class FormTranslation {
         this.labels = labels;
     }
 
-    public boolean isEmpty() {
-        return concepts == null && labels == null;
-    }
-
     public static FormTranslation parse(JSONObject jsonObject, String locale) {
         FormTranslation formTranslation = new FormTranslation();
         if (!jsonObject.has(locale))
