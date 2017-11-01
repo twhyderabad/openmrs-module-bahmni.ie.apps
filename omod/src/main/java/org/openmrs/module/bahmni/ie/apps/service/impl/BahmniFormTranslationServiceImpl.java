@@ -17,14 +17,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -63,17 +58,16 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 
         HashMap<String, ArrayList<String>> translatedConceptNames =
                 getTranslationsForConcepts(Locale.forLanguageTag(locale), defaultTranslation.getConcepts(), Locale.forLanguageTag(defaultTranslation.getLocale()));
-        Map<String, String> translatedLabels = getLabelTranslations(locale, defaultTranslation.getLocale(), defaultTranslation.getLabels());
+        Map<String, ArrayList<String>> translatedLabels = getLabelTranslations(locale, defaultTranslation.getLocale(), defaultTranslation.getLabels());
 
         return new FormFieldTranslations(translatedConceptNames, translatedLabels, locale);
     }
 
-    private Map<String, String> getLabelTranslations(String locale, String defaultLocale, Map<String, String> labels) {
+    private Map<String, ArrayList<String>> getLabelTranslations(String locale, String defaultLocale, Map<String, String> labels) {
+        Stream<Map.Entry<String, String>> stream = labels.entrySet().stream();
         if (defaultLocale.equals(locale))
-            return labels;
-        return labels.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getKey));
+            return stream.collect(Collectors.toMap(Map.Entry::getKey, label -> new ArrayList<>(Collections.singletonList(label.getValue()))));
+        return stream.collect(Collectors.toMap(Map.Entry::getKey, label -> new ArrayList<>(Collections.singletonList(label.getKey()))));
     }
 
     private HashMap<String, ArrayList<String>> getTranslationsForConcepts(Locale locale, Map<String, String> conceptTranslations, Locale defaultLocale) {

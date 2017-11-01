@@ -5,10 +5,10 @@ import java.util.Map;
 
 public class FormFieldTranslations {
     private Map<String, ArrayList<String>> concepts;
-    private Map<String, String> labels;
+    private Map<String, ArrayList<String>> labels;
     private String locale;
 
-    public FormFieldTranslations(Map<String, ArrayList<String>> concepts, Map<String, String> labels, String locale) {
+    public FormFieldTranslations(Map<String, ArrayList<String>> concepts, Map<String, ArrayList<String>> labels, String locale) {
         this.concepts = concepts;
         this.labels = labels;
         this.locale = locale;
@@ -25,11 +25,11 @@ public class FormFieldTranslations {
         this.concepts = concepts;
     }
 
-    public Map<String, String> getLabels() {
+    public Map<String, ArrayList<String>> getLabels() {
         return labels;
     }
 
-    public void setLabels(Map<String, String> labels) {
+    public void setLabels(Map<String, ArrayList<String>> labels) {
         this.labels = labels;
     }
 
