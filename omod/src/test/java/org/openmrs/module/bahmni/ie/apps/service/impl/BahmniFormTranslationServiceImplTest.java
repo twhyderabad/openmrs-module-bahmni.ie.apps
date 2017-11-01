@@ -58,12 +58,14 @@ public class BahmniFormTranslationServiceImplTest {
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
-        bahmniFormTranslationService.saveFormTranslation(formTranslationFr);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
 
         List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "fr");
         assertEquals(1, formTranslations.size());
         assertEquals("fr", formTranslations.get(0).getLocale());
+        formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "en");
+        assertEquals(1, formTranslations.size());
+        assertEquals("en", formTranslations.get(0).getLocale());
     }
 
     @Test
@@ -72,8 +74,7 @@ public class BahmniFormTranslationServiceImplTest {
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
         FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
-        bahmniFormTranslationService.saveFormTranslation(formTranslationFr);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
 
         List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", null);
         assertEquals(2, formTranslations.size());
@@ -92,9 +93,11 @@ public class BahmniFormTranslationServiceImplTest {
     public void shouldSaveTranslationsOfGivenForm() throws Exception {
         BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         String tempTranslationsPath = createTempFolder();
-        FormTranslation formTranslation = createFormTranslation("en", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslation);
-        String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+        FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
+        FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
+        String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}," +
+                "\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
         File translationFile = new File(tempTranslationsPath + "/test_form_1.json");
         assertTrue(translationFile.exists());
         assertEquals(FileUtils.readFileToString(translationFile), expected);
@@ -107,7 +110,7 @@ public class BahmniFormTranslationServiceImplTest {
         FormTranslation formTranslation = createFormTranslation("en", "1", null);
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Invalid Parameters");
-        bahmniFormTranslationService.saveFormTranslation(formTranslation);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
     }
 
     @Test
@@ -117,7 +120,7 @@ public class BahmniFormTranslationServiceImplTest {
         setTranslationPath("/var/www/blah/blah");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("/test_form_1.json' could not be created");
-        bahmniFormTranslationService.saveFormTranslation(formTranslation);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
     }
 
     @Test
@@ -127,7 +130,7 @@ public class BahmniFormTranslationServiceImplTest {
         FormTranslation formTranslation = createFormTranslation("en", null, "test_form");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Invalid Parameters");
-        bahmniFormTranslationService.saveFormTranslation(formTranslation);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
     }
 
     @Test
@@ -137,7 +140,7 @@ public class BahmniFormTranslationServiceImplTest {
         FormTranslation formTranslation = createFormTranslation(null, "1", "test_form");
         expectedException.expect(APIException.class);
         expectedException.expectMessage("Invalid Parameters");
-        bahmniFormTranslationService.saveFormTranslation(formTranslation);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
     }
 
     @Test
@@ -146,7 +149,7 @@ public class BahmniFormTranslationServiceImplTest {
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
 
@@ -168,7 +171,7 @@ public class BahmniFormTranslationServiceImplTest {
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("es", "test_form", "1");
 
@@ -189,7 +192,7 @@ public class BahmniFormTranslationServiceImplTest {
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
 
@@ -213,7 +216,7 @@ public class BahmniFormTranslationServiceImplTest {
         FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
         ((HashMap) formTranslationEn.getConcepts()).put("TEMPERATURE_1", "Translated Temperature");
         System.out.println(formTranslationEn);
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
 
@@ -238,7 +241,7 @@ public class BahmniFormTranslationServiceImplTest {
         FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
 //        ((HashMap) formTranslationEn.getConcepts()).put("TEMPERATURE_1", "Translated Temperature");
         System.out.println(formTranslationEn);
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
 
@@ -262,7 +265,7 @@ public class BahmniFormTranslationServiceImplTest {
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("pt", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("pt", "test_form", "1");
         Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
@@ -286,7 +289,7 @@ public class BahmniFormTranslationServiceImplTest {
         BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
         createTempFolder();
         FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-        bahmniFormTranslationService.saveFormTranslation(formTranslationEn);
+        bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
 
         FormFieldTranslations formFieldTranslations = bahmniFormTranslationService.setNewTranslationsForForm("fr", "test_form", "1");
         Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();

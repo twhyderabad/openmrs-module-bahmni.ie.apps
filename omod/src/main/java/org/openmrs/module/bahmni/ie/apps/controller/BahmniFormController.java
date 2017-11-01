@@ -29,8 +29,8 @@ public class BahmniFormController extends BaseRestController {
 
     @RequestMapping(value = baseUrl+"/saveTranslation", method = RequestMethod.POST)
     @ResponseBody
-    public FormTranslation FormTranslation(@RequestBody FormTranslation formTranslation){
-        return bahmniFormTranslationService.saveFormTranslation(formTranslation);
+    public List<FormTranslation> FormTranslation(@RequestBody List<FormTranslation> formTranslations){
+        return bahmniFormTranslationService.saveFormTranslation(formTranslations);
     }
 
     @RequestMapping(value = baseUrl + "/translations", method = RequestMethod.GET )

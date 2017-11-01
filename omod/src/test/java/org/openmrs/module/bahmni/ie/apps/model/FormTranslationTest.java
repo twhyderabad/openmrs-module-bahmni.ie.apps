@@ -42,7 +42,7 @@ public class FormTranslationTest {
     @Test
     public void shouldReturnTrueIfItsEmpty() throws Exception {
         FormTranslation formTranslation = new FormTranslation();
-        assertTrue(formTranslation.isEmpty());
+        assertTrue(isEmpty(formTranslation));
     }
 
     @Test
@@ -52,6 +52,10 @@ public class FormTranslationTest {
 
         FormTranslation formTranslation = FormTranslation.parse(translation, "en");
 
-        assertFalse(formTranslation.isEmpty());
+        assertFalse(isEmpty(formTranslation));
+    }
+
+    private boolean isEmpty(FormTranslation formTranslation) {
+        return formTranslation.getConcepts() == null && formTranslation.getLabels() == null;
     }
 }
