@@ -34,7 +34,7 @@
 
     <globalProperty>
         <property>bahmni.formTranslations.directory</property>
-        <defaultValue>/var/www/bahmni_config/openmrs/apps/forms/translations</defaultValue>
+        <defaultValue>/home/bahmni/clinical_forms/translations</defaultValue>
         <description>
             Filesystem path for saving the bahmni forms translations
         </description>
