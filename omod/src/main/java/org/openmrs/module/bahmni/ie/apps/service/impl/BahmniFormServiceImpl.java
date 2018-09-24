@@ -19,6 +19,7 @@ import org.openmrs.module.bahmni.ie.apps.service.BahmniFormService;
 import org.openmrs.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@Service("bahmniFormService")
 public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniFormService {
     private FormService formService;
     private BahmniFormDao bahmniFormDao;
@@ -76,6 +78,7 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
     }
 
     @Override
+    @Transactional
     public BahmniForm publish(String formUuid) {
         Form form = formService.getFormByUuid(formUuid);
         if (form != null) {

@@ -21,15 +21,14 @@
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
 	<!-- Add here beans related to the web context -->
-
-	<bean id="bahmniFormService" class="org.openmrs.module.bahmni.ie.apps.service.impl.BahmniFormServiceImpl"/>
+	<context:component-scan base-package="org.openmrs.module.bahmni.ie.apps" />
 
 	<bean parent="serviceContext">
-		<property name="moduleService">
-			<list>
+   		<property name="moduleService">
+			<list merge="true">
 				<value>org.openmrs.module.bahmni.ie.apps.service.BahmniFormService</value>
-				<ref local="bahmniFormService"/>
+				<ref bean="bahmniFormService"/>
 			</list>
-		</property>
-	</bean>
+   		</property>
+	</bean>	
 </beans>
