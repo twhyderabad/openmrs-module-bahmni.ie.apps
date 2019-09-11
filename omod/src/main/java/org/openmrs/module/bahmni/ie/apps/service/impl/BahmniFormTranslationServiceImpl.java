@@ -16,10 +16,19 @@ import org.openmrs.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormTranslationService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,11 +50,12 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
     public List<FormTranslation> saveFormTranslation(List<FormTranslation> formTranslations) {
         ObjectMapper mapper = new ObjectMapper();
         List<FormTranslation> translationList =
-                mapper.convertValue(formTranslations, new TypeReference<List<FormTranslation>>(){});
+                mapper.convertValue(formTranslations, new TypeReference<List<FormTranslation>>() { });
         FormTranslation translation = translationList.get(0);
         if (translation != null) {
             String formName = translation.getFormName();
             String version = translation.getVersion();
+            String refVersion = translation.getReferenceVersion();
             File translationFile = new File(getFileName(formName, version));
             translationFile.getParentFile().mkdirs();
             JSONObject translationsJson = getTranslations(translationFile);
@@ -56,10 +66,41 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
                 }
                 translationsJson.put(formTranslation.getLocale(), getUpdatedTranslations(formTranslation));
             }
+            int formVersion = isNotEmpty(version) ? Integer.parseInt(version) : 0;
+            boolean formHaveRefVersion = formVersion > 0 && isNotEmpty(refVersion);
+            if (formHaveRefVersion) {
+                JSONObject refVersionTranslationsJson = getTranslations(new File(getFileName(formName, refVersion)));
+                if (!refVersionTranslationsJson.keySet().isEmpty())
+                    updateTranslationsWithRefVersion(translation, translationsJson, refVersionTranslationsJson);
+            }
             saveTranslationsToFile(translationsJson, translationFile);
         }
 
         return formTranslations;
+    }
+
+    private void updateTranslationsWithRefVersion(FormTranslation translation, JSONObject translationsJson,
+                                                  JSONObject refVersionTranslationsJson) {
+        Iterator<String> locales = refVersionTranslationsJson.keys();
+        while (locales.hasNext()) {
+            String locale = locales.next();
+            boolean isDefaultLocale = locale.equals(translation.getLocale());
+            JSONObject localeTranslations = refVersionTranslationsJson.getJSONObject(locale);
+            localeTranslations.put("concepts", getUpdatedLocaleTranslationsForControls(localeTranslations.getJSONObject("concepts"), translation.getConcepts(), isDefaultLocale));
+            localeTranslations.put("labels", getUpdatedLocaleTranslationsForControls(localeTranslations.getJSONObject("labels"), translation.getLabels(), isDefaultLocale));
+            translationsJson.put(locale, localeTranslations);
+        }
+    }
+
+    private Map<String, String> getUpdatedLocaleTranslationsForControls(JSONObject refVersionControls, Map<String, String> currentVersionControls, boolean isDefualtLocale) {
+        if (CollectionUtils.isEmpty(currentVersionControls))
+            return new HashMap<>();
+        currentVersionControls.keySet().forEach(control -> {
+            if (refVersionControls.has(control))
+                currentVersionControls.put(control, refVersionControls.getString(control));
+            else currentVersionControls.put(control, isDefualtLocale ? currentVersionControls.get(control) : control);
+        });
+        return currentVersionControls;
     }
 
     @Override
