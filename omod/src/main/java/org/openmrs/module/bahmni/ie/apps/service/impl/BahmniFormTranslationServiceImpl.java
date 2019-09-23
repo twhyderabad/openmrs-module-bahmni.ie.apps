@@ -15,9 +15,9 @@ import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.openmrs.module.bahmni.ie.apps.model.FormTranslation;
 import org.openmrs.module.bahmni.ie.apps.service.BahmniFormTranslationService;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
-@Component
+@Service
 public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService implements BahmniFormTranslationService {
 
     private static final String DEFAULT_FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
@@ -47,6 +47,7 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
     }
 
     @Override
+    @Transactional
     public List<FormTranslation> saveFormTranslation(List<FormTranslation> formTranslations) {
         ObjectMapper mapper = new ObjectMapper();
         List<FormTranslation> translationList =
