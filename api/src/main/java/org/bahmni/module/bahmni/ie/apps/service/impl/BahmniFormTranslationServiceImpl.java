@@ -186,7 +186,7 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 
 	private void saveTranslationsToFile(JSONObject translationsJson, File translationFile) {
 		try {
-			FileUtils.writeStringToFile(translationFile, translationsJson.toString());
+			FileUtils.writeStringToFile(translationFile, translationsJson.toString(), "UTF-8");
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -236,7 +236,7 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 	private JSONObject getTranslations(File translationFile) {
 		String fileContent;
 		try {
-			fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile) : "";
+			fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile, "UTF-8") : "";
 		}
 		catch (IOException e) {
 			e.printStackTrace();

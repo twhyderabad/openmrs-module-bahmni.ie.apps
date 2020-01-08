@@ -37,6 +37,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
@@ -540,6 +541,28 @@ public class BahmniFormTranslationServiceImplTest {
 		File translationFile = new File(tempTranslationsPath + "/test_form_1.json");
 		assertTrue(translationFile.exists());
 		assertEquals(importedTranslationsJson, FileUtils.readFileToString(translationFile));
+	}
+
+	@Test
+	public void shouldGetUnsupportedCharactersWithoutUTF8() throws IllegalAccessException, NoSuchFieldException, IOException {
+		String tempTranslationsPath = createTempFolder();
+		String translationsFilePath = tempTranslationsPath + "/test_form_1.json";
+		String prevVersionJson = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature  Le caleçon\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(translationsFilePath), prevVersionJson, "ISO-8859-1");
+
+		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature  Le caleçon\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		assertNotEquals(FileUtils.readFileToString(new File(translationsFilePath)), expected);
+	}
+
+	@Test
+	public void shouldSupportAllSpecialCharactersWithoutUTF8() throws IllegalAccessException, NoSuchFieldException, IOException {
+		String tempTranslationsPath = createTempFolder();
+		String translationsFilePath = tempTranslationsPath + "/test_form_1.json";
+		String prevVersionJson = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature  Le caleçon\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(translationsFilePath), prevVersionJson, "UTF-8");
+
+		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature  Le caleçon\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		assertEquals(FileUtils.readFileToString(new File(translationsFilePath)), expected);
 	}
 
 	private static FormTranslation createFormTranslation(String locale, String version, String formName) {
