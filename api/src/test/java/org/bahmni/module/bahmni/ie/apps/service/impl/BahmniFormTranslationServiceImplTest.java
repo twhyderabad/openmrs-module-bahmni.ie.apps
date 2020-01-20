@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static org.bahmni.module.bahmni.ie.apps.helper.FormTranslationHelper.createFormTranslation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -563,21 +564,6 @@ public class BahmniFormTranslationServiceImplTest {
 
 		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature  Le caleçon\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		assertEquals(FileUtils.readFileToString(new File(translationsFilePath)), expected);
-	}
-
-	private static FormTranslation createFormTranslation(String locale, String version, String formName) {
-		FormTranslation formTranslation = new FormTranslation();
-		formTranslation.setLocale(locale);
-		formTranslation.setVersion(version);
-		formTranslation.setFormName(formName);
-		HashMap<String, String> concepts = new HashMap<>();
-		concepts.put("TEMPERATURE_1", "Temperature");
-		concepts.put("TEMPERATURE_1_DESC", "Temperature");
-		formTranslation.setConcepts(concepts);
-		HashMap<String, String> labels = new HashMap<>();
-		labels.put("LABEL_2", "Vitals");
-		formTranslation.setLabels(labels);
-		return formTranslation;
 	}
 
 	private String createTempFolder() throws IOException, NoSuchFieldException, IllegalAccessException {

@@ -1,44 +1,60 @@
 package org.bahmni.module.bahmni.ie.apps.model;
 
+import java.util.List;
+
 public class BahmniForm {
+    private String name;
+    private String uuid;
+    private String version;
+    private boolean published;
+    private Integer id;
+    private List<BahmniFormResource> resources;
 
-	private String name;
+    public String getName() {
+        return name;
+    }
 
-	private String uuid;
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	private String version;
+    public String getUuid() {
+        return uuid;
+    }
 
-	private boolean published;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getVersion() {
+        return version;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
-	public String getUuid() {
-		return uuid;
-	}
+    public boolean isPublished() {
+        return published;
+    }
 
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
-	}
+    public void setPublished(boolean published) {
+        this.published = published;
+    }
 
-	public String getVersion() {
-		return version;
-	}
+    public Integer getId() {
+        return id;
+    }
 
-	public void setVersion(String version) {
-		this.version = version;
-	}
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-	public boolean isPublished() {
-		return published;
-	}
+    public List<BahmniFormResource> getResources() {
+        return resources;
+    }
 
-	public void setPublished(boolean published) {
-		this.published = published;
-	}
+    public void setResources(List<BahmniFormResource> resources) {
+        this.resources = resources;
+    }
 }
