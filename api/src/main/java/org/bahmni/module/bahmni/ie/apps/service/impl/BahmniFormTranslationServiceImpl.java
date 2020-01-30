@@ -1,6 +1,7 @@
 package org.bahmni.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.io.FileUtils;
+import org.bahmni.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONObject;
@@ -16,7 +17,6 @@ import org.bahmni.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.File;
@@ -39,9 +39,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService implements BahmniFormTranslationService {
 
 	private static final String DEFAULT_FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
-
 	private final String CONCEPT_TRANS_KEY_PATTERN = "_[0-9]+$";
-
 	private final String DESC_TRANS_KEY_PATTERN = "_[0-9]+_DESC$";
 
 	@Override
@@ -50,7 +48,6 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 	}
 
 	@Override
-	@Transactional
 	public List<FormTranslation> saveFormTranslation(List<FormTranslation> formTranslations) {
 		ObjectMapper mapper = new ObjectMapper();
 		List<FormTranslation> translationList =
@@ -62,7 +59,8 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 			String formName = translation.getFormName();
 			String version = translation.getVersion();
 			String refVersion = translation.getReferenceVersion();
-			File translationFile = new File(getFileName(formName, version));
+			String normalizedFileName = BahmniFormUtils.normalizeFileName(formName);
+			File translationFile = new File(getFileName(normalizedFileName, version));
 			translationFile.getParentFile().mkdirs();
 			JSONObject translationsJson = getTranslations(translationFile);
 
@@ -73,11 +71,14 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 				translationsJson.put(formTranslation.getLocale(), getUpdatedTranslations(formTranslation));
 			}
 			int formVersion = isNotEmpty(version) ? Integer.parseInt(version) : 0;
-			boolean formHaveRefVersion = formVersion > 0 && isNotEmpty(refVersion);
-			if (formHaveRefVersion) {
-				JSONObject refVersionTranslationsJson = getTranslations(new File(getFileName(formName, refVersion)));
-				if (!refVersionTranslationsJson.keySet().isEmpty())
-					updateTranslationsWithRefVersion(translation, translationsJson, refVersionTranslationsJson);
+			if (formVersion > 0 && isNotEmpty(refVersion)) {
+				File refTranslationFile = new File(getFileName(formName, refVersion));
+				if(!refTranslationFile.exists()){
+					refTranslationFile = new File(getFileName(normalizedFileName, refVersion));
+				}
+				JSONObject previousTranslationsJson = getTranslations(refTranslationFile);
+				if (!previousTranslationsJson.keySet().isEmpty())
+					updateTranslationsWithRefVersion(translation, translationsJson, previousTranslationsJson);
 			}
 			saveTranslationsToFile(translationsJson, translationFile);
 		}
@@ -227,9 +228,14 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 	}
 
 	private JSONObject getTranslationJsonFromFile(String formName, String formVersion) {
-		File translationFile = new File(getFileName(formName, formVersion));
-		if (!translationFile.exists())
-			throw new APIException(String.format("Unable to find translation file for %s_v%s", formName, formVersion));
+		File translationFile;
+		translationFile= new File(getFileName(formName, formVersion));
+		if (!translationFile.exists()){
+			String translatedFileName = BahmniFormUtils.normalizeFileName(formName);
+			translationFile = new File(getFileName(translatedFileName, formVersion));
+			if(!translationFile.exists())
+				throw new APIException(String.format("Unable to find translation file for %s_v%s", formName, formVersion));
+		}
 		return getTranslations(translationFile);
 	}
 
