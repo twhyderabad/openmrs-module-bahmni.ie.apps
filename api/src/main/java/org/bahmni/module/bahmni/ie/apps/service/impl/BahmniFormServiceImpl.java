@@ -173,6 +173,13 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
         return new ExportResponse(bahmniFormDataList, errorFormNames);
     }
 
+    @Override
+    public List<BahmniForm> getAllLatestPublishedFormsWithFormNameTranslation(boolean includeRetired, String encounterUuid) {
+       List<FormResource> formList = bahmniFormDao.getAllPublishedFormsWithTranslations(includeRetired);
+        return getLatestFormWithTransaltionByVersion(formList);
+
+    }
+
     private BahmniFormData getBahmniFormData(Form form) {
         BahmniFormData bahmniFormData = new BahmniFormData();
         BahmniFormMapper bahmniFormMapper = new BahmniFormMapper();
@@ -219,6 +226,44 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
 
     private static String getKey(Obs o) {
         return o.getFormFieldPath().split("/")[0];
+    }
+
+    private List<BahmniForm> getLatestFormWithTransaltionByVersion(List<FormResource> formResources) {
+        Map<String, FormResource> bahmniFormMap = new LinkedHashMap<>();
+        Map<String, String> bahmniForTranslation = new LinkedHashMap<>();
+        List<BahmniForm> bahmniForms = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(formResources)) {
+            for (FormResource formResource : formResources) {
+                if (formResource.getName().equals("Translation")) {
+                    bahmniForTranslation.put(formResource.getForm().getName(), formResource.getValueReference());
+                }
+            }
+            for (FormResource formResource : formResources) {
+                Form form = formResource.getForm();
+                String formName = form.getName();
+                if (!formResource.getName().equals("Translation")) {
+                    if (bahmniFormMap.containsKey(formName)) {
+                        if (Integer.parseInt(form.getVersion()) > Integer.parseInt(bahmniFormMap.get(formName).getForm().getVersion())) {
+                            bahmniFormMap.put(formName, formResource);
+                        }
+                    } else {
+                        bahmniFormMap.put(formName, formResource);
+                    }
+                }
+            }
+
+            BahmniFormMapper mapper = new BahmniFormMapper();
+            for (FormResource formResource : bahmniFormMap.values()) {
+                BahmniForm bahmniForm = mapper.map(formResource.getForm());
+                if(bahmniForTranslation.containsKey(bahmniForm.getName())) {
+                    bahmniForm.setNameTranslations(bahmniForTranslation.get(bahmniForm.getName()));
+                }
+                bahmniForms.add(bahmniForm);
+
+            }
+        }
+
+        return bahmniForms;
     }
 
     private List<BahmniForm> getLatestFormByVersion(List<Form> forms) {

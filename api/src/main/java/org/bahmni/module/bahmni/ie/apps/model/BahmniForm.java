@@ -10,6 +10,16 @@ public class BahmniForm {
     private Integer id;
     private List<BahmniFormResource> resources;
 
+    public String getNameTranslations() {
+        return nameTranslations;
+    }
+
+    public void setNameTranslations(String nameTranslations) {
+        this.nameTranslations = nameTranslations;
+    }
+
+    private String nameTranslations;
+
     public String getName() {
         return name;
     }

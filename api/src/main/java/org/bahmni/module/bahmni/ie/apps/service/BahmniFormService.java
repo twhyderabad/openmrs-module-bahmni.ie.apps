@@ -18,4 +18,6 @@ public interface BahmniFormService extends OpenmrsService {
     List<BahmniForm> getAllForms();
 
     ExportResponse getFormsByListOfUuids(List<String> formUuids);
+
+    List<BahmniForm> getAllLatestPublishedFormsWithFormNameTranslation(boolean includeRetired, String encounterUuid);
 }
