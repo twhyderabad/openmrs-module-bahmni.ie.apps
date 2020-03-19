@@ -45,16 +45,18 @@ public class BahmniFormController extends BaseRestController {
     @ResponseBody
     public List<FormTranslation> getTranslations(@RequestParam(value = "formName") String formName,
                                                  @RequestParam(value = "formVersion") String formVersion,
+                                                 @RequestParam(value = "formUuid") String formUuid,
                                                  @RequestParam(value = "locale", required = false) String locale) {
-        return bahmniFormTranslationService.getFormTranslations(formName, formVersion, locale);
+        return bahmniFormTranslationService.getFormTranslations(formName, formVersion, locale, formUuid);
     }
 
     @RequestMapping(value = baseUrl + "/translate", method = RequestMethod.GET)
     @ResponseBody
     public FormFieldTranslations translate(@RequestParam(value = "formName") String formName,
                                            @RequestParam(value = "formVersion") String formVersion,
+                                           @RequestParam(value = "formUuid") String formUuid,
                                            @RequestParam(value = "locale") String locale) {
-        return bahmniFormTranslationService.setNewTranslationsForForm(locale, formName, formVersion);
+        return bahmniFormTranslationService.setNewTranslationsForForm(locale, formName, formVersion, formUuid);
     }
 
     @RequestMapping(value = baseUrl + "/publish", method = RequestMethod.POST)
