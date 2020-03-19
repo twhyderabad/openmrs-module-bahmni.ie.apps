@@ -21,7 +21,7 @@ public class BahmniFormServiceTest extends BaseModuleWebContextSensitiveTest {
 
 	@After
 	public void deleteResources() {
-		FileUtils.deleteQuietly(new File("src/test/resources/Bahmni_Form_5.json"));
+		FileUtils.deleteQuietly(new File("src/test/resources/d9218f76-6c39-45f4-8efa-4c5c6c199f52.json"));
 	}
 
 	@Test
@@ -32,6 +32,6 @@ public class BahmniFormServiceTest extends BaseModuleWebContextSensitiveTest {
 		assertEquals(true, Context.getFormService().getForm(2).getPublished());
 
 		FormResource formResource = Context.getFormService().getFormResource(1);
-		assertEquals("src/test/resources/Bahmni_Form_5.json", formResource.getValueReference());
+		assertEquals("src/test/resources/d9218f76-6c39-45f4-8efa-4c5c6c199f52.json", formResource.getValueReference());
 	}
 }

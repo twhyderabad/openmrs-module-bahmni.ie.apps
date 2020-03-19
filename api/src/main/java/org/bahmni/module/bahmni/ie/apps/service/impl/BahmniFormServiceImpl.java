@@ -14,7 +14,6 @@ import org.bahmni.module.bahmni.ie.apps.model.ExportResponse;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormService;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
-import org.bahmni.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
@@ -74,24 +73,26 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
     public BahmniFormResource saveFormResource(BahmniFormResource bahmniFormResource) {
         Form form = formService.getFormByUuid(bahmniFormResource.getForm().getUuid());
         FormResource formResource = getFormResource(bahmniFormResource.getUuid());
+        Form newPublishedForm = null;
         if (form.getPublished()) {
             form = cloneForm(form);
             form.setVersion(nextGreatestVersionId(form.getName()).toString());
-            formService.saveForm(form);
+            newPublishedForm = formService.saveForm(form);
 
             formResource = cloneFormResource(formResource);
         }
+        String formUuid = newPublishedForm != null ? newPublishedForm.getUuid() : form.getUuid();
         formResource.setForm(form);
         formResource.setName(bahmniFormResource.getForm().getName());
         formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
-        formResource.setDatatypeConfig(constructFileNameFromForm(form));
+        formResource.setDatatypeConfig(constructFileNameFromUuid(formUuid));
         formResource.setValue(bahmniFormResource.getValue());
         formResource = formService.saveFormResource(formResource);
         return new BahmniFormMapper().map(formResource);
     }
 
-    private String constructFileNameFromForm(Form form) {
-        String fileName = BahmniFormUtils.normalizeFileName(form.getName()) + "_" + form.getVersion() + ".json";
+    private String constructFileNameFromUuid(String formUuid) {
+        String fileName = formUuid + ".json";
         return administrationService.getGlobalProperty(GP_BAHMNI_FORM_PATH_JSON, DEFAULT_JSON_FOLDER_PATH) + fileName;
     }
 
@@ -106,17 +107,17 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
             }
             form.setPublished(Boolean.TRUE);
             form = formService.saveForm(form);
-            updateFormResourceWithLatestVersion(form);
+            updateFormResourceWithLatestVersion(form, formUuid);
         }
         return new BahmniFormMapper().map(form);
     }
 
-    private void updateFormResourceWithLatestVersion(Form form) {
+    private void updateFormResourceWithLatestVersion(Form form, String formUuid) {
         Collection<FormResource> formResourceCollection = formService.getFormResourcesForForm(form);
         if (formResourceCollection.size() == 1) {
             FormResource formResource = formResourceCollection.iterator().next();
             formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
-            formResource.setDatatypeConfig(constructFileNameFromForm(form));
+            formResource.setDatatypeConfig(constructFileNameFromUuid(formUuid));
             formResource.setValue(formResource.getValue());
             formService.saveFormResource(formResource);
         }

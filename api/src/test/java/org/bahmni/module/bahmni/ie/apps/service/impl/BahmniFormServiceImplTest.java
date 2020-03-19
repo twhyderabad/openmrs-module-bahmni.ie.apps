@@ -320,7 +320,7 @@ public class BahmniFormServiceImplTest {
         when(formService.getFormResourceByUuid(any(String.class))).thenReturn(formResource);
 
         formResource.setDatatypeClassname(FileSystemStorageDatatype.class.getName());
-        formResource.setDatatypeConfig("FormName_FormVersion.json");
+        formResource.setDatatypeConfig("FormUuid_FormVersion.json");
 
         when(formService.saveFormResource(formResource)).thenReturn(formResource);
 
