@@ -1,20 +1,25 @@
 package org.bahmni.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.io.FileUtils;
+import org.bahmni.module.bahmni.ie.apps.model.FormNameTranslation;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONObject;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
+import org.openmrs.Form;
+import org.openmrs.FormResource;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.bahmni.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -38,11 +43,22 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 @Service
 public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService implements BahmniFormTranslationService {
 
+	private FormService formService;
+
 	private static final String DEFAULT_FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
 
 	private final String CONCEPT_TRANS_KEY_PATTERN = "_[0-9]+$";
 
 	private final String DESC_TRANS_KEY_PATTERN = "_[0-9]+_DESC$";
+
+	@Autowired
+	public BahmniFormTranslationServiceImpl(FormService formService) {
+		this.formService = formService;
+	}
+
+	public BahmniFormTranslationServiceImpl() {
+
+	}
 
 	@Override
 	public List<FormTranslation> getFormTranslations(String formName, String formVersion,
@@ -97,6 +113,18 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 				defaultTranslation.getLabels());
 
 		return new FormFieldTranslations(translatedConceptNames, translatedLabels, locale);
+	}
+
+	@Override
+	public FormNameTranslation getFormNameTranslations(String formName, String uuid) {
+		Form form = formService.getFormByUuid(uuid);
+		FormResource formResource = formService.getFormResource(form, formName + "_FormName_Translation");
+		FormNameTranslation formNameTranslation = new FormNameTranslation();
+		formNameTranslation.setFormName(formName);
+		formNameTranslation.setFormUuid(uuid);
+		if (formResource != null)
+			formNameTranslation.setValue(formResource.getValueReference());
+		return formNameTranslation;
 	}
 
 	private Map<String, ArrayList<String>> getLabelTranslations(String locale, String defaultLocale,
