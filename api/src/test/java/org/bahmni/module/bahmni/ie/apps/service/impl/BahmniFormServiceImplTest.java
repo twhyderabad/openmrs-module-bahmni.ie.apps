@@ -39,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -448,6 +449,54 @@ public class BahmniFormServiceImplTest {
         assertEquals("1", response.getBahmniFormDataList().get(0).getFormJson().getVersion());
         assertEquals("Bahmni Form Resource One", response.getBahmniFormDataList().get(0).getFormJson()
                 .getResources().get(0).getValue());
+    }
+
+
+    @Test
+    public void shouldSaveFormNameResourceWithGivenValue() {
+        BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("", "ReferenceValue", bahmniForm);
+
+        Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
+        FormResource formResource = MotherForm.createFormResource(1, "ReferenceValue", "FormResourceUuid", form);
+
+        when(formService.getFormByUuid(any(String.class))).thenReturn(form);
+        when(formService.saveFormResource(any(FormResource.class))).thenReturn(formResource);
+
+        BahmniFormResource updatedBahmniFormResource = service.saveFormNameTranslation(bahmniFormResource, null);
+
+        assertNotNull(updatedBahmniFormResource);
+        assertEquals("ReferenceValue", updatedBahmniFormResource.getValue());
+
+        assertNotNull(updatedBahmniFormResource.getForm());
+        assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
+        assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
+    }
+
+    @Test
+    public void shouldSaveFormNameResourceWithAlreadyExistingValue() {
+        BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("", "ReferenceValue", bahmniForm);
+
+        Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
+        Form oldForm = MotherForm.createForm("FormName", "OldFormUuid", "FormVersion", false);
+        FormResource oldFormResource = MotherForm.createFormResource(1, "Old Form Reference Value", "FormResourceUuid", form);
+        oldFormResource.setValueReferenceInternal("Old Form Reference Value");
+        FormResource formResource = MotherForm.createFormResource(2, "ReferenceValue", "FormResourceUuid", form);
+
+        when(formService.getFormByUuid("OldFormUuid")).thenReturn(oldForm);
+        when(formService.getFormByUuid("FormUuid")).thenReturn(form);
+        when(formService.getFormResource(eq(oldForm), any())).thenReturn(oldFormResource);
+        when(formService.saveFormResource(any(FormResource.class))).thenReturn(oldFormResource);
+
+        BahmniFormResource updatedBahmniFormResource = service.saveFormNameTranslation(bahmniFormResource, "OldFormUuid");
+
+        assertNotNull(updatedBahmniFormResource);
+        assertEquals("Old Form Reference Value", updatedBahmniFormResource.getValue());
+
+        assertNotNull(updatedBahmniFormResource.getForm());
+        assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
+        assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
     }
 
 }
