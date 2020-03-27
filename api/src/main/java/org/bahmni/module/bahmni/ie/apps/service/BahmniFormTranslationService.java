@@ -15,5 +15,5 @@ public interface BahmniFormTranslationService extends OpenmrsService {
 
 	FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version, String formUuid);
 
-	FormNameTranslation getFormNameTranslations(String formName, String uuid);
+	String getFormNameTranslations(String formName, String uuid);
 }

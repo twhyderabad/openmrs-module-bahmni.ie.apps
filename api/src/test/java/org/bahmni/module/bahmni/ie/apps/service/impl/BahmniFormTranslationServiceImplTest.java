@@ -695,10 +695,8 @@ public class BahmniFormTranslationServiceImplTest {
 
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl(formService);
 
-		FormNameTranslation formNameTranslation = bahmniFormTranslationService.getFormNameTranslations(formName, formUuid);
-		assertEquals("THIS IS THE TRANSLATION VALUE", formNameTranslation.getValue());
-		assertEquals(formUuid, formNameTranslation.getFormUuid());
-		assertEquals(formName, formNameTranslation.getFormName());
+		String formNameTranslation = bahmniFormTranslationService.getFormNameTranslations(formName, formUuid);
+		assertEquals("THIS IS THE TRANSLATION VALUE", formNameTranslation);
 	}
 
 	private String createTempFolder() throws IOException, NoSuchFieldException, IllegalAccessException {
