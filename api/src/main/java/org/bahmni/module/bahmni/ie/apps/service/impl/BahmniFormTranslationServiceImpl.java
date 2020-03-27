@@ -116,15 +116,10 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 	}
 
 	@Override
-	public FormNameTranslation getFormNameTranslations(String formName, String uuid) {
+	public String getFormNameTranslations(String formName, String uuid) {
 		Form form = formService.getFormByUuid(uuid);
 		FormResource formResource = formService.getFormResource(form, formName + "_FormName_Translation");
-		FormNameTranslation formNameTranslation = new FormNameTranslation();
-		formNameTranslation.setFormName(formName);
-		formNameTranslation.setFormUuid(uuid);
-		if (formResource != null)
-			formNameTranslation.setValue(formResource.getValueReference());
-		return formNameTranslation;
+		return formResource != null ? formResource.getValueReference() : null;
 	}
 
 	private Map<String, ArrayList<String>> getLabelTranslations(String locale, String defaultLocale,
