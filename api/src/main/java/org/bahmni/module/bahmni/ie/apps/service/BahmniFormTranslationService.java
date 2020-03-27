@@ -1,5 +1,6 @@
 package org.bahmni.module.bahmni.ie.apps.service;
 
+import org.bahmni.module.bahmni.ie.apps.model.FormNameTranslation;
 import org.openmrs.api.OpenmrsService;
 import org.bahmni.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
@@ -13,4 +14,6 @@ public interface BahmniFormTranslationService extends OpenmrsService {
 	List<FormTranslation> saveFormTranslation(List<FormTranslation> formTranslation);
 
 	FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version, String formUuid);
+
+	FormNameTranslation getFormNameTranslations(String formName, String uuid);
 }

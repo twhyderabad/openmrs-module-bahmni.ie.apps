@@ -4,6 +4,8 @@ import org.apache.commons.io.FileUtils;
 import org.bahmni.module.bahmni.ie.apps.validator.BahmniFormUtils;
 import org.bahmni.module.bahmni.ie.apps.service.impl.BahmniFormTranslationServiceImpl;
 import org.json.JSONObject;
+import org.bahmni.module.bahmni.ie.apps.MotherForm;
+import org.bahmni.module.bahmni.ie.apps.model.FormNameTranslation;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,14 +17,18 @@ import org.mockito.Mock;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
+import org.openmrs.Form;
+import org.openmrs.FormResource;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
 import org.bahmni.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
+import org.openmrs.customdatatype.NotYetPersistedException;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -48,6 +54,9 @@ import static org.mockito.Mockito.when;
 @PrepareForTest({Context.class, BahmniFormUtils.class})
 @RunWith(PowerMockRunner.class)
 public class BahmniFormTranslationServiceImplTest {
+
+	@Mock
+	FormService formService;
 
 	@Mock
 	private ConceptService conceptService;
@@ -655,6 +664,41 @@ public class BahmniFormTranslationServiceImplTest {
 
 		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature  Le caleçon\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		assertEquals(FileUtils.readFileToString(new File(translationsFilePath)), expected);
+	}
+
+	@Test
+	public void shouldThrowExceptionForNullValuedResource() {
+		Form form = MotherForm.createForm("FormName", "FormUuid", "FormVersion", false);
+		FormResource formResource = MotherForm.createFormResource(1, "", "FormResourceUuid", form);
+
+		when(formService.getFormByUuid("FormUuid")).thenReturn(form);
+		when(formService.getFormResource(form, "FormName" + "_FormName_Translation")).thenReturn(formResource);
+
+		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl(formService);
+
+		expectedException.expect(NotYetPersistedException.class);
+
+		bahmniFormTranslationService.getFormNameTranslations("FormName", "FormUuid");
+	}
+
+	@Test
+	public void shouldGetFormNameTranslations() {
+		String formName = "FormName";
+		String formUuid = "FormUuid";
+
+		Form form = MotherForm.createForm(formName, formUuid, "FormVersion", false);
+		FormResource formResource = MotherForm.createFormResource(1, "THIS IS THE TRANSLATION VALUE", "FormResourceUuid", form);
+		formResource.setValueReferenceInternal("THIS IS THE TRANSLATION VALUE");
+
+		when(formService.getFormByUuid(formUuid)).thenReturn(form);
+		when(formService.getFormResource(form, formName + "_FormName_Translation")).thenReturn(formResource);
+
+		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl(formService);
+
+		FormNameTranslation formNameTranslation = bahmniFormTranslationService.getFormNameTranslations(formName, formUuid);
+		assertEquals("THIS IS THE TRANSLATION VALUE", formNameTranslation.getValue());
+		assertEquals(formUuid, formNameTranslation.getFormUuid());
+		assertEquals(formName, formNameTranslation.getFormName());
 	}
 
 	private String createTempFolder() throws IOException, NoSuchFieldException, IllegalAccessException {

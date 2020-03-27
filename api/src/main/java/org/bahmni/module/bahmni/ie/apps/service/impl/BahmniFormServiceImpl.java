@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.log4j.Logger;
 import org.bahmni.customdatatype.datatype.FileSystemStorageDatatype;
+import org.bahmni.customdatatype.datatype.FormNameTranslationDatatype;
 import org.bahmni.module.bahmni.ie.apps.Constants;
 import org.bahmni.module.bahmni.ie.apps.dao.BahmniFormDao;
 import org.bahmni.module.bahmni.ie.apps.mapper.BahmniFormMapper;
@@ -172,6 +173,31 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
             }
         }
         return new ExportResponse(bahmniFormDataList, errorFormNames);
+    }
+
+    @Override
+    public BahmniFormResource saveFormNameTranslation(BahmniFormResource bahmniFormResource, String referenceFormUuid) {
+        Form form = formService.getFormByUuid(bahmniFormResource.getForm().getUuid());
+        FormResource formResource = getFormResource(bahmniFormResource.getUuid());
+        formResource.setForm(form);
+        formResource.setName(bahmniFormResource.getForm().getName() + "_FormName_Translation");
+        formResource.setDatatypeClassname(FormNameTranslationDatatype.class.getName());
+        if (referenceFormUuid == null || referenceFormUuid.trim().equals("")) {
+            formResource.setDatatypeConfig(bahmniFormResource.getValue());
+            formResource.setValue(bahmniFormResource.getValue());
+        } else {
+            String value = grtOldFormResourceValue(referenceFormUuid);
+            formResource.setDatatypeConfig(value);
+            formResource.setValue(value);
+        }
+        formResource = formService.saveFormResource(formResource);
+        return new BahmniFormMapper().map(formResource);
+    }
+
+    private String grtOldFormResourceValue(String referenceFormUuid) {
+        Form form = formService.getFormByUuid(referenceFormUuid);
+        FormResource formResource = formService.getFormResource(form, form.getName() + "_FormName_Translation");
+        return formResource.getValueReference();
     }
 
     private BahmniFormData getBahmniFormData(Form form) {
