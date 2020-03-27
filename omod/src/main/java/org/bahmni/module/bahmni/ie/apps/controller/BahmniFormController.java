@@ -11,6 +11,8 @@ import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -101,7 +103,11 @@ public class BahmniFormController extends BaseRestController {
 
     @RequestMapping(value = baseUrl + "/name/translate", method = RequestMethod.GET)
     @ResponseBody
-    public FormNameTranslation getFormNameTranslations(@RequestParam(value = "formName") String formName, @RequestParam(value = "formUuid") String formUuid) {
-        return bahmniFormTranslationService.getFormNameTranslations(formName, formUuid);
+    public ResponseEntity<String> getFormNameTranslations(@RequestParam(value = "formName") String formName, @RequestParam(value = "formUuid") String formUuid) {
+        String response =bahmniFormTranslationService.getFormNameTranslations(formName, formUuid);
+        if (response != null)
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        else
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
