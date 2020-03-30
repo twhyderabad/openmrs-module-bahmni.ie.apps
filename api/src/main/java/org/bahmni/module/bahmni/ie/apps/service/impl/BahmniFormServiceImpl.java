@@ -37,6 +37,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+
 @Service("bahmniFormService")
 public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniFormService {
 
@@ -177,19 +179,16 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
 
     @Override
     public BahmniFormResource saveFormNameTranslation(BahmniFormResource bahmniFormResource, String referenceFormUuid) {
+        String value = isEmpty(referenceFormUuid) ? bahmniFormResource.getValue() : grtOldFormResourceValue(referenceFormUuid);
+        if (isEmpty(value))
+            return null;
         Form form = formService.getFormByUuid(bahmniFormResource.getForm().getUuid());
         FormResource formResource = getFormResource(bahmniFormResource.getUuid());
         formResource.setForm(form);
         formResource.setName(bahmniFormResource.getForm().getName() + "_FormName_Translation");
         formResource.setDatatypeClassname(FormNameTranslationDatatype.class.getName());
-        if (referenceFormUuid == null || referenceFormUuid.trim().equals("")) {
-            formResource.setDatatypeConfig(bahmniFormResource.getValue());
-            formResource.setValue(bahmniFormResource.getValue());
-        } else {
-            String value = grtOldFormResourceValue(referenceFormUuid);
-            formResource.setDatatypeConfig(value);
-            formResource.setValue(value);
-        }
+        formResource.setDatatypeConfig(value);
+        formResource.setValue(value);
         formResource = formService.saveFormResource(formResource);
         return new BahmniFormMapper().map(formResource);
     }
@@ -197,7 +196,7 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
     private String grtOldFormResourceValue(String referenceFormUuid) {
         Form form = formService.getFormByUuid(referenceFormUuid);
         FormResource formResource = formService.getFormResource(form, form.getName() + "_FormName_Translation");
-        return formResource.getValueReference();
+        return formResource != null ? formResource.getValueReference() : null;
     }
 
     private BahmniFormData getBahmniFormData(Form form) {
