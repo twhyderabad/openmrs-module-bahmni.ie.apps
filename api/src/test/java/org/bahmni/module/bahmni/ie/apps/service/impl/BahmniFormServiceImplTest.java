@@ -37,10 +37,12 @@ import static org.bahmni.module.bahmni.ie.apps.helper.FormTranslationHelper.crea
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -497,6 +499,31 @@ public class BahmniFormServiceImplTest {
         assertNotNull(updatedBahmniFormResource.getForm());
         assertEquals("FormName", updatedBahmniFormResource.getForm().getName());
         assertEquals("FormUuid", updatedBahmniFormResource.getForm().getUuid());
+    }
+
+    @Test
+    public void shouldReturnNullIfNoValueAndReferenceFormUuidAreGiven() {
+        BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("", "", bahmniForm);
+
+        BahmniFormResource updatedBahmniFormResource = service.saveFormNameTranslation(bahmniFormResource, "");
+        assertNull(null, updatedBahmniFormResource);
+        verify(formService, times(0)).saveFormResource(any());
+    }
+
+    @Test
+    public void shouldReturnNullIfNoValueIsFoundForGivenReferenceFormUuid() {
+        BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
+        BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("", "", bahmniForm);
+
+        Form oldForm = MotherForm.createForm("FormName", "OldFormUuid", "FormVersion", false);
+
+        when(formService.getFormByUuid("OLD_REF_FORM_UUID")).thenReturn(oldForm);
+        when(formService.getFormResource(oldForm, "FormName_FormName_Translation")).thenReturn(null);
+        BahmniFormResource updatedBahmniFormResource = service.saveFormNameTranslation(bahmniFormResource, "OLD_REF_FORM_UUID");
+
+        assertNull(null, updatedBahmniFormResource);
+        verify(formService, times(0)).saveFormResource(any());
     }
 
 }
