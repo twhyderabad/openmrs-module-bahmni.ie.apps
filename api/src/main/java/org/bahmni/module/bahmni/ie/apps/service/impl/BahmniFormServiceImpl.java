@@ -19,6 +19,7 @@ import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.Obs;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
@@ -179,9 +180,10 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
 
     @Override
     public BahmniFormResource saveFormNameTranslation(BahmniFormResource bahmniFormResource, String referenceFormUuid) {
-        String value = isEmpty(referenceFormUuid) ? bahmniFormResource.getValue() : grtOldFormResourceValue(referenceFormUuid);
-        if (isEmpty(value))
-            return null;
+        if (isEmpty(referenceFormUuid) && isEmpty(bahmniFormResource.getValue())) {
+            throw new APIException();
+        }
+        String value = getFormResourceValue(bahmniFormResource, referenceFormUuid);
         Form form = formService.getFormByUuid(bahmniFormResource.getForm().getUuid());
         FormResource formResource = getFormResource(bahmniFormResource.getUuid());
         formResource.setForm(form);
@@ -189,8 +191,16 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
         formResource.setDatatypeClassname(FormNameTranslationDatatype.class.getName());
         formResource.setDatatypeConfig(value);
         formResource.setValue(value);
-        formResource = formService.saveFormResource(formResource);
+        if (!isEmpty(value))
+            formResource = formService.saveFormResource(formResource);
         return new BahmniFormMapper().map(formResource);
+    }
+
+    private String getFormResourceValue(BahmniFormResource bahmniFormResource, String referenceFormUuid) {
+        String value = isEmpty(referenceFormUuid)
+                ? bahmniFormResource.getValue()
+                : grtOldFormResourceValue(referenceFormUuid);
+        return value == null || value.trim().equals("") ? "" : value;
     }
 
     private String grtOldFormResourceValue(String referenceFormUuid) {

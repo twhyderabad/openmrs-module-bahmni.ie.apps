@@ -12,17 +12,21 @@ import org.bahmni.module.bahmni.ie.apps.service.BahmniFormService;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.openmrs.Encounter;
 import org.openmrs.Form;
 import org.openmrs.FormResource;
 import org.openmrs.Obs;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
+import org.openmrs.customdatatype.NotYetPersistedException;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -68,6 +72,9 @@ public class BahmniFormServiceImplTest {
 
     @Mock
     private BahmniFormTranslationService bahmniFormTranslationService;
+
+    @Rule
+    ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() {
@@ -506,8 +513,8 @@ public class BahmniFormServiceImplTest {
         BahmniForm bahmniForm = MotherForm.createBahmniForm("FormName", "FormUuid");
         BahmniFormResource bahmniFormResource = MotherForm.createBahmniFormResource("", "", bahmniForm);
 
-        BahmniFormResource updatedBahmniFormResource = service.saveFormNameTranslation(bahmniFormResource, "");
-        assertNull(null, updatedBahmniFormResource);
+        expectedException.expect(APIException.class);
+        service.saveFormNameTranslation(bahmniFormResource, "");
         verify(formService, times(0)).saveFormResource(any());
     }
 
@@ -522,7 +529,7 @@ public class BahmniFormServiceImplTest {
         when(formService.getFormResource(oldForm, "FormName_FormName_Translation")).thenReturn(null);
         BahmniFormResource updatedBahmniFormResource = service.saveFormNameTranslation(bahmniFormResource, "OLD_REF_FORM_UUID");
 
-        assertNull(null, updatedBahmniFormResource);
+        assertEquals("", updatedBahmniFormResource.getValue());
         verify(formService, times(0)).saveFormResource(any());
     }
 
