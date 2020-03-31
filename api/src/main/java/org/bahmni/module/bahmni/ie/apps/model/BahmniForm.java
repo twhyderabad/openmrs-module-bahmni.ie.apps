@@ -10,6 +10,18 @@ public class BahmniForm {
     private Integer id;
     private List<BahmniFormResource> resources;
 
+    private String nameTranslation;
+
+    public BahmniForm(){}
+
+    public BahmniForm(String name, String uuid,  String version, boolean published, Integer id,String nameTranslation){
+        this.name=name;
+        this.uuid= uuid;
+        this.version=version;
+        this.published=published;
+        this.id=id;
+        this.nameTranslation = nameTranslation;
+    }
     public String getName() {
         return name;
     }
@@ -56,5 +68,13 @@ public class BahmniForm {
 
     public void setResources(List<BahmniFormResource> resources) {
         this.resources = resources;
+    }
+
+    public String getNameTranslation() {
+        return nameTranslation;
+    }
+
+    public void setNameTranslation(String nameTranslation) {
+        this.nameTranslation = nameTranslation;
     }
 }

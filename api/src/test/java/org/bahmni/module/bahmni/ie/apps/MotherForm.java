@@ -25,6 +25,15 @@ public class MotherForm {
 		}};
 	}
 
+	public static BahmniForm createBahmniForm(String name, String uuid, String version, boolean isPublished) {
+		return new BahmniForm() {{
+			setName(name);
+			setUuid(uuid);
+			setVersion(version);
+			setPublished(isPublished);
+		}};
+	}
+
 	public static BahmniForm createBahmniForm(String formName, String uuid) {
 		return new BahmniForm() {{
 			setName(formName);

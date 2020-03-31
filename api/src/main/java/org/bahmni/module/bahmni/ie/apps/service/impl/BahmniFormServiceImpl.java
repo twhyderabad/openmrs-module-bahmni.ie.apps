@@ -129,8 +129,8 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
 
     @Override
     public List<BahmniForm> getAllLatestPublishedForms(boolean includeRetired, String encounterUuid) {
-        List<Form> allPublishedForms = bahmniFormDao.getAllPublishedForms(includeRetired);
-        List<BahmniForm> latestPublishedForms = getLatestFormByVersion(allPublishedForms);
+        List<BahmniForm> publishedFormsWithNameTranslation = bahmniFormDao.getAllPublishedFormsWithNameTranslation(includeRetired);
+        List<BahmniForm> latestPublishedForms = getLatestFormByVersion(publishedFormsWithNameTranslation);
 
         if (encounterUuid == null) {
             return latestPublishedForms;
@@ -148,7 +148,7 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
             return latestPublishedForms;
         }
 
-        return mergeForms(allPublishedForms, latestPublishedForms, groupedObsByFormName);
+        return mergeForms(publishedFormsWithNameTranslation, latestPublishedForms, groupedObsByFormName);
     }
 
     @Override
@@ -221,18 +221,18 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
         return bahmniFormData;
     }
 
-    private List<BahmniForm> mergeForms(List<Form> allPublishedForms, List<BahmniForm> latestPublishedForms,
+    private List<BahmniForm> mergeForms(List<BahmniForm> allPublishedForms, List<BahmniForm> latestPublishedForms,
                                         Map<String, List<Obs>> groupedObsByFormName) {
         for (String formName : groupedObsByFormName.keySet()) {
             String[] formNameAndVersion = formName.split("\\.");
             boolean isSameVersion = latestPublishedForms.parallelStream()
                     .anyMatch(isSameBahmniForm(formNameAndVersion));
             if (!isSameVersion) {
-                List<Form> listForms = allPublishedForms.stream().filter(isSameForm(formNameAndVersion))
+                List<BahmniForm> listForms = allPublishedForms.stream().filter(isSameForm(formNameAndVersion))
                         .collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(listForms))
                     continue;
-                Form publishedFormWithObs = listForms.get(0);
+                BahmniForm publishedFormWithObs = listForms.get(0);
                 latestPublishedForms = latestPublishedForms.parallelStream().map(form -> {
                     if (form.getName().equals(formNameAndVersion[0])) {
                         form.setVersion(publishedFormWithObs.getVersion());
@@ -245,7 +245,7 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
         return latestPublishedForms;
     }
 
-    private Predicate<Form> isSameForm(String[] formNameAndVersion) {
+    private Predicate<BahmniForm> isSameForm(String[] formNameAndVersion) {
         return form -> form.getName().equals(formNameAndVersion[0]) && form.getVersion().equals(formNameAndVersion[1]);
     }
 
@@ -257,10 +257,10 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
         return o.getFormFieldPath().split("/")[0];
     }
 
-    private List<BahmniForm> getLatestFormByVersion(List<Form> forms) {
-        Map<String, Form> bahmniFormMap = new LinkedHashMap<>();
+    private List<BahmniForm> getLatestFormByVersion(List<BahmniForm> forms) {
+        Map<String, BahmniForm> bahmniFormMap = new LinkedHashMap<>();
         if (CollectionUtils.isNotEmpty(forms)) {
-            for (Form form : forms) {
+            for (BahmniForm form : forms) {
                 String formName = form.getName();
                 if (bahmniFormMap.containsKey(formName)) {
                     if (Integer.parseInt(form.getVersion()) > Integer.parseInt(bahmniFormMap.get(formName).getVersion())) {
@@ -271,7 +271,7 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
                 }
             }
         }
-        return map(bahmniFormMap);
+        return new ArrayList<>(bahmniFormMap.values());
     }
 
     private List<BahmniForm> map(Map<String, Form> forDetailsMap) {
