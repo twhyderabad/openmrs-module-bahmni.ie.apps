@@ -1,6 +1,7 @@
 package org.bahmni.module.bahmni.ie.apps.dao;
 
 import org.openmrs.Form;
+import org.openmrs.FormResource;
 import org.openmrs.api.db.DAOException;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface BahmniFormDao {
 	List<Form> getAllPublishedForms(boolean includeRetired) throws DAOException;
 
 	List<Form> getAllFormsByListOfUuids(List<String> formUuids) throws DAOException;
+
+	List getAllPublishedFormsWithNameTranslation(boolean includeRetired) throws DAOException;
 }
