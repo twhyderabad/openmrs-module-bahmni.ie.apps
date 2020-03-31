@@ -8,9 +8,11 @@ import org.bahmni.module.bahmni.ie.apps.model.FormNameTranslation;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormService;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
+import org.openmrs.api.APIException;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -97,8 +99,12 @@ public class BahmniFormController extends BaseRestController {
 
     @RequestMapping(value = baseUrl + "/name/saveTranslation", method = RequestMethod.POST)
     @ResponseBody
-    public BahmniFormResource saveFormNameTranslations(@RequestBody BahmniFormResource bahmniFormResource, @RequestParam(value = "referenceFormUuid", required = false) String referenceFormUuid) {
-        return bahmniFormService.saveFormNameTranslation(bahmniFormResource, referenceFormUuid);
+    public ResponseEntity<BahmniFormResource> saveFormNameTranslations(@RequestBody BahmniFormResource bahmniFormResource, @RequestParam(value = "referenceFormUuid", required = false) String referenceFormUuid) {
+        try {
+            return new ResponseEntity<>(bahmniFormService.saveFormNameTranslation(bahmniFormResource, referenceFormUuid), HttpStatus.OK);
+        } catch (APIException ae) {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
     }
 
     @RequestMapping(value = baseUrl + "/name/translate", method = RequestMethod.GET)
