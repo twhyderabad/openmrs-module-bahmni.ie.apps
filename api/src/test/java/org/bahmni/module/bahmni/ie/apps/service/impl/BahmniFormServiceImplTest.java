@@ -345,11 +345,11 @@ public class BahmniFormServiceImplTest {
 
     @Test
     public void shouldReturnAllForms() {
-        Form form1 = MotherForm.createForm("FormName-1", "FormUuid1", "1", true);
-        Form form2 = MotherForm.createForm("FormName-1", "FormUuid2", "2", true);
-        Form form3 = MotherForm.createForm("FormName-2", "FormUuid3", "1", true);
-        Form form4 = MotherForm.createForm("FormName-3", "FormUuid4", "1", false);
-        when(bahmniFormDao.getAllForms(any(String.class), any(Boolean.class), any(Boolean.class)))
+        BahmniForm form1 = MotherForm.createBahmniForm("FormName-1", "FormUuid1", "1", true);
+        BahmniForm form2 = MotherForm.createBahmniForm("FormName-1", "FormUuid2", "2", true);
+        BahmniForm form3 = MotherForm.createBahmniForm("FormName-2", "FormUuid3", "1", true);
+        BahmniForm form4 = MotherForm.createBahmniForm("FormName-3", "FormUuid4", "1", false);
+        when(bahmniFormDao.formsWithNameTransaltionsFor(any(String.class), any(Boolean.class), any(Boolean.class)))
                 .thenReturn(Arrays.asList(form1, form2, form3, form4));
 
         List<BahmniForm> bahmniForms = service.getAllForms();
@@ -382,7 +382,7 @@ public class BahmniFormServiceImplTest {
         when(mapper.mapResources(any())).thenReturn(Collections.singletonList(bahmniFormResource));
         when(mapper.map(any(Form.class), any())).thenReturn(bahmniForm);
 
-        ExportResponse response = service.getFormsByListOfUuids(Collections.singletonList("UUID1"));
+        ExportResponse response = service.formDetailsFor(Collections.singletonList("UUID1"));
         assertNotNull(response);
         assertEquals(1, response.getBahmniFormDataList().size());
         assertEquals(0, response.getErrorFormList().size());
@@ -403,7 +403,7 @@ public class BahmniFormServiceImplTest {
         when(bahmniFormDao.getAllFormsByListOfUuids(any())).thenReturn(Collections.singletonList(form1));
         when(bahmniFormTranslationService.getFormTranslations(form1.getName(), form1.getVersion(),
                 null, form1.getUuid())).thenThrow(Exception.class);
-        ExportResponse response = service.getFormsByListOfUuids(Collections.singletonList("UUID"));
+        ExportResponse response = service.formDetailsFor(Collections.singletonList("UUID"));
         assertNotNull(response);
         assertEquals(0, response.getBahmniFormDataList().size());
         assertEquals(1, response.getErrorFormList().size());
@@ -419,7 +419,7 @@ public class BahmniFormServiceImplTest {
         when(bahmniFormTranslationService.getFormTranslations(form1.getName(), form1.getVersion(), null, "form_uuid")).
                 thenReturn(Arrays.asList(formTranslationEn, formTranslationFr));
         when(formService.getFormResourcesForForm(any(Form.class))).thenThrow(Exception.class);
-        ExportResponse response = service.getFormsByListOfUuids(Collections.singletonList("UUID"));
+        ExportResponse response = service.formDetailsFor(Collections.singletonList("UUID"));
         assertNotNull(response);
         assertEquals(0, response.getBahmniFormDataList().size());
         assertEquals(1, response.getErrorFormList().size());
@@ -450,7 +450,7 @@ public class BahmniFormServiceImplTest {
                 singletonList(formResourceOne));
         when(mapper.mapResources(Collections.singletonList(formResourceOne))).thenReturn(Collections.singletonList(bahmniFormResourceOne));
         when(mapper.map(any(Form.class), any())).thenReturn(bahmniFormOne);
-        ExportResponse response = service.getFormsByListOfUuids(Arrays.asList("UUID1", "UUID2"));
+        ExportResponse response = service.formDetailsFor(Arrays.asList("UUID1", "UUID2"));
         assertNotNull(response);
         assertEquals(1, response.getBahmniFormDataList().size());
         assertEquals(1, response.getErrorFormList().size());

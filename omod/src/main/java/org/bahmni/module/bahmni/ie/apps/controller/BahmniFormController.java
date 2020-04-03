@@ -4,7 +4,6 @@ import org.bahmni.module.bahmni.ie.apps.model.BahmniForm;
 import org.bahmni.module.bahmni.ie.apps.model.BahmniFormResource;
 import org.bahmni.module.bahmni.ie.apps.model.ExportResponse;
 import org.bahmni.module.bahmni.ie.apps.model.FormFieldTranslations;
-import org.bahmni.module.bahmni.ie.apps.model.FormNameTranslation;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormService;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 public class BahmniFormController extends BaseRestController {
@@ -93,8 +91,8 @@ public class BahmniFormController extends BaseRestController {
 
     @RequestMapping(value = baseUrl + "/export", method = RequestMethod.GET)
     @ResponseBody
-    public ExportResponse export(@RequestParam ("uuid") List<String> uuids) {
-        return bahmniFormService.getFormsByListOfUuids(uuids);
+    public ExportResponse export(@RequestParam ("uuid") List<String> formUuids) {
+        return bahmniFormService.formDetailsFor(formUuids);
     }
 
     @RequestMapping(value = baseUrl + "/name/saveTranslation", method = RequestMethod.POST)
