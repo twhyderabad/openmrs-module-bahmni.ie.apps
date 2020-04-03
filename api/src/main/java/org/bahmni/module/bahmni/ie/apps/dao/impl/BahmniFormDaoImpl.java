@@ -61,25 +61,42 @@ public class BahmniFormDaoImpl implements BahmniFormDao {
 	}
 
 	@Override
+	public List<BahmniForm> formsWithNameTransaltionsFor(String formName, boolean includeRetired,
+														 boolean includeDraftState) throws DAOException {
+		Session currentSession = sessionFactory.getCurrentSession();
+		boolean filterPublishedForms = !includeDraftState;
+		boolean filterByFormName = formName != null;
+		boolean applyAnyFilter = filterPublishedForms || filterByFormName || !includeRetired;
+
+		String whereClause=  applyAnyFilter? "where " : "";
+		String publishedQueryCondition=  filterPublishedForms ? "F.published=true" : "";
+		String retiredQueryCondition= includeRetired? "" : filterPublishedForms ?  "and F.retired=false " : "F.retired=false" ;
+		String formNameQueryCondition= filterByFormName ? !includeRetired || filterPublishedForms ?
+				"and name= "+ formName : "name= "+ formName : "";
+
+		Query query =  currentSession.createQuery( String.format("Select COALESCE(FR.valueReference,'[]') as nameTranslation, " +
+				"F.name as name, F.uuid as uuid, F.version as version, F.published as published " +
+				"from FormResource FR right outer join FR.form F with FR.datatypeClassname!=" +
+				"'org.bahmni.customdatatype.datatype.FileSystemStorageDatatype' %s %s %s %s " +
+				"order by F.name asc, F.version desc", whereClause, publishedQueryCondition, retiredQueryCondition, formNameQueryCondition))
+				.setResultTransformer( Transformers.aliasToBean(BahmniForm.class));
+
+		return query.list();
+
+	}
+
+	@Override
 	public List<Form> getAllFormsByListOfUuids(List<String> formUuids) throws DAOException {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Form.class);
 		criteria.add(Restrictions.in("uuid", formUuids));
 		criteria.add(Restrictions.eq("retired", Boolean.valueOf(false)));
 		criteria.add(Restrictions.eq("published", Boolean.valueOf(true)));
+		Session currentSession = sessionFactory.getCurrentSession();
 		return criteria.list();
 	}
 
 	@Override
 	public List<BahmniForm> getAllPublishedFormsWithNameTranslation(boolean includeRetired) throws DAOException {
-		Session currentSession = sessionFactory.getCurrentSession();
-		String retiredQueryCondition= includeRetired? "" : "and F.retired=false ";
-		Query query =  currentSession.createQuery( String.format("Select COALESCE(FR.valueReference,'[]') as nameTranslation, " +
-				"F.name as name, F.uuid as uuid, F.version as version, F.published as published " +
-				"from FormResource FR right outer join FR.form F with FR.datatypeClassname!=" +
-				"'org.bahmni.customdatatype.datatype.FileSystemStorageDatatype' where F.published=true " +
-				"%s order by F.name asc, F.version desc", retiredQueryCondition))
-				.setResultTransformer( Transformers.aliasToBean(BahmniForm.class));
-
-		return query.list();
+		return formsWithNameTransaltionsFor(null, includeRetired, false);
 	}
 }

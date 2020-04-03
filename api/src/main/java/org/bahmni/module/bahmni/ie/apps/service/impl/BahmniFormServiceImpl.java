@@ -153,17 +153,13 @@ public class BahmniFormServiceImpl extends BaseOpenmrsService implements BahmniF
 
     @Override
     public List<BahmniForm> getAllForms() {
-        List<Form> formList = bahmniFormDao.getAllForms(null, false, false);
-        List<BahmniForm> bahmniFormList = new ArrayList<>();
-        BahmniFormMapper mapper = new BahmniFormMapper();
-        for (Form form : formList) {
-            bahmniFormList.add(mapper.map(form));
-        }
+        List<BahmniForm> bahmniFormList = bahmniFormDao.formsWithNameTransaltionsFor(null,
+                false, false);
         return bahmniFormList;
     }
 
     @Override
-    public ExportResponse getFormsByListOfUuids(List<String> formUuids) {
+    public ExportResponse formDetailsFor(List<String> formUuids) {
         List<Form> formList = bahmniFormDao.getAllFormsByListOfUuids(formUuids);
         List<BahmniFormData> bahmniFormDataList = new ArrayList<>();
         List<String> errorFormNames = new ArrayList<>();
