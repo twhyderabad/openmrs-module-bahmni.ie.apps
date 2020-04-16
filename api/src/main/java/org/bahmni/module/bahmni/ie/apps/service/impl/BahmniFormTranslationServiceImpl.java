@@ -17,6 +17,7 @@ import org.bahmni.module.bahmni.ie.apps.model.FormFieldTranslations;
 import org.bahmni.module.bahmni.ie.apps.model.FormTranslation;
 import org.bahmni.module.bahmni.ie.apps.service.BahmniFormTranslationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.File;
@@ -48,6 +49,7 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 	}
 
 	@Override
+	@Transactional
 	public List<FormTranslation> saveFormTranslation(List<FormTranslation> formTranslations) {
 		ObjectMapper mapper = new ObjectMapper();
 		List<FormTranslation> translationList =
