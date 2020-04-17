@@ -15,9 +15,30 @@ public class FormTranslation {
 
 	private String formName;
 
+
+	private String formUuid;
+
 	private String version;
 
 	private String referenceVersion;
+
+	private String referenceFormUuid;
+
+	public String getFormUuid() {
+		return formUuid;
+	}
+
+	public void setFormUuid(String formUuid) {
+		this.formUuid = formUuid;
+	}
+
+	public String getReferenceFormUuid() {
+		return referenceFormUuid;
+	}
+
+	public void setReferenceFormUuid(String referenceFormUuid) {
+		this.referenceFormUuid = referenceFormUuid;
+	}
 
 	public String getLocale() {
 		return locale;

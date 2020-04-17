@@ -40,12 +40,15 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService implements BahmniFormTranslationService {
 
 	private static final String DEFAULT_FORM_TRANSLATIONS_PATH = "/var/www/bahmni_config/openmrs/apps/forms/translations";
+
 	private final String CONCEPT_TRANS_KEY_PATTERN = "_[0-9]+$";
+
 	private final String DESC_TRANS_KEY_PATTERN = "_[0-9]+_DESC$";
 
 	@Override
-	public List<FormTranslation> getFormTranslations(String formName, String formVersion, String locale) {
-		return mapTranslations(locale, formName, formVersion);
+	public List<FormTranslation> getFormTranslations(String formName, String formVersion,
+													 String locale, String formUuid) {
+		return translationsFor(locale, formName, formVersion, formUuid);
 	}
 
 	@Override
@@ -56,31 +59,24 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 				mapper.convertValue(formTranslations, new TypeReference<List<FormTranslation>>() {
 
 				});
-		FormTranslation translation = translationList.get(0);
-		if (translation != null) {
-			String formName = translation.getFormName();
-			String version = translation.getVersion();
-			String refVersion = translation.getReferenceVersion();
-			String normalizedFileName = BahmniFormUtils.normalizeFileName(formName);
-			File translationFile = new File(getFileName(normalizedFileName, version));
-			translationFile.getParentFile().mkdirs();
-			JSONObject translationsJson = getTranslations(translationFile);
+		FormTranslation firstTranslation = translationList.get(0);
+		if (firstTranslation != null) {
+			File translationFile = translationFileFor(firstTranslation);
+			JSONObject translationsJson = translationFrom(translationList, translationFile);
 
-			for (FormTranslation formTranslation : translationList) {
-				if (!validate(formTranslation)) {
-					throw new APIException("Invalid Parameters");
+			boolean hasReferenceForm = isNotEmpty(firstTranslation.getVersion())
+					&& isNotEmpty(firstTranslation.getReferenceVersion());
+			boolean referenceFormIsNotTheCurrentForm = hasReferenceForm &&
+					!firstTranslation.getVersion().equals(firstTranslation.getReferenceVersion());
+
+			if (hasReferenceForm && referenceFormIsNotTheCurrentForm) {
+				File referenceVersionFile = translationFileFor(firstTranslation.getFormName(),
+						firstTranslation.getReferenceVersion(), firstTranslation.getReferenceFormUuid());
+				if(referenceVersionFile.exists()) {
+					JSONObject refVersionTranslationsJson = existingTranslationsFrom(referenceVersionFile);
+					if (!refVersionTranslationsJson.keySet().isEmpty())
+						updateTranslationsWithRefVersion(firstTranslation, translationsJson, refVersionTranslationsJson);
 				}
-				translationsJson.put(formTranslation.getLocale(), getUpdatedTranslations(formTranslation));
-			}
-			int formVersion = isNotEmpty(version) ? Integer.parseInt(version) : 0;
-			if (formVersion > 0 && isNotEmpty(refVersion)) {
-				File refTranslationFile = new File(getFileName(formName, refVersion));
-				if(!refTranslationFile.exists()){
-					refTranslationFile = new File(getFileName(normalizedFileName, refVersion));
-				}
-				JSONObject previousTranslationsJson = getTranslations(refTranslationFile);
-				if (!previousTranslationsJson.keySet().isEmpty())
-					updateTranslationsWithRefVersion(translation, translationsJson, previousTranslationsJson);
 			}
 			saveTranslationsToFile(translationsJson, translationFile);
 		}
@@ -88,41 +84,11 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 		return formTranslations;
 	}
 
-	private void updateTranslationsWithRefVersion(FormTranslation translation, JSONObject translationsJson,
-			JSONObject refVersionTranslationsJson) {
-		Iterator<String> locales = refVersionTranslationsJson.keys();
-		while (locales.hasNext()) {
-			String locale = locales.next();
-			boolean isDefaultLocale = locale.equals(translation.getLocale());
-			JSONObject localeTranslations = refVersionTranslationsJson.getJSONObject(locale);
-			localeTranslations.put("concepts",
-					getUpdatedLocaleTranslationsForControls(localeTranslations.getJSONObject("concepts"),
-							translation.getConcepts(), isDefaultLocale));
-			localeTranslations.put("labels",
-					getUpdatedLocaleTranslationsForControls(localeTranslations.getJSONObject("labels"),
-							translation.getLabels(), isDefaultLocale));
-			translationsJson.put(locale, localeTranslations);
-		}
-	}
-
-	private Map<String, String> getUpdatedLocaleTranslationsForControls(JSONObject refVersionControls,
-			Map<String, String> currentVersionControls, boolean isDefualtLocale) {
-		if (CollectionUtils.isEmpty(currentVersionControls))
-			return new HashMap<>();
-		currentVersionControls.keySet().forEach(control -> {
-			if (refVersionControls.has(control))
-				currentVersionControls.put(control, refVersionControls.getString(control));
-			else
-				currentVersionControls.put(control, isDefualtLocale ? currentVersionControls.get(control) : control);
-		});
-		return currentVersionControls;
-	}
-
 	@Override
-	public FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version) {
+	public FormFieldTranslations setNewTranslationsForForm(String locale, String formName, String version, String formUuid) {
 		String defaultLocale = Context.getAdministrationService().getGlobalProperty("default_locale");
-		FormTranslation defaultTranslation = mapTranslations(defaultLocale, formName, version).get(0);
-		FormTranslation localeTranslation = mapTranslations(locale, formName, version).get(0);
+		FormTranslation defaultTranslation = translationsFor(defaultLocale, formName, version, formUuid).get(0);
+		FormTranslation localeTranslation = translationsFor(locale, formName, version, formUuid).get(0);
 		defaultTranslation = isEmpty(localeTranslation) ? defaultTranslation : localeTranslation;
 
 		HashMap<String, ArrayList<String>> translatedConceptNames =
@@ -142,6 +108,54 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 					.toMap(Map.Entry::getKey, label -> new ArrayList<>(Collections.singletonList(label.getValue()))));
 		return stream.collect(
 				Collectors.toMap(Map.Entry::getKey, label -> new ArrayList<>(Collections.singletonList(label.getKey()))));
+	}
+
+	private JSONObject translationFrom(List<FormTranslation> translationList, File translationFile) {
+		JSONObject translationsJson = existingTranslationsFrom(translationFile);
+		for (FormTranslation formTranslation : translationList) {
+			if (!validate(formTranslation)) {
+				throw new APIException("Invalid Parameters");
+			}
+			translationsJson.put(formTranslation.getLocale(), getUpdatedTranslations(formTranslation));
+		}
+		return translationsJson;
+	}
+
+	private File translationFileFor(FormTranslation translation) {
+		String formUuid = translation.getFormUuid();
+		File translationFile = new File(getFileName(formUuid));
+		translationFile.getParentFile().mkdirs();
+		return translationFile;
+	}
+
+	private void updateTranslationsWithRefVersion(FormTranslation translation, JSONObject translationsJson,
+												  JSONObject refVersionTranslationsJson) {
+		Iterator<String> locales = refVersionTranslationsJson.keys();
+		while (locales.hasNext()) {
+			String locale = locales.next();
+			boolean isDefaultLocale = locale.equals(translation.getLocale());
+			JSONObject localeTranslations = refVersionTranslationsJson.getJSONObject(locale);
+			localeTranslations.put("concepts",
+					getUpdatedLocaleTranslationsForControls(localeTranslations.getJSONObject("concepts"),
+							translation.getConcepts(), isDefaultLocale));
+			localeTranslations.put("labels",
+					getUpdatedLocaleTranslationsForControls(localeTranslations.getJSONObject("labels"),
+							translation.getLabels(), isDefaultLocale));
+			translationsJson.put(locale, localeTranslations);
+		}
+	}
+
+	private Map<String, String> getUpdatedLocaleTranslationsForControls(JSONObject refVersionControls,
+																		Map<String, String> currentVersionControls, boolean isDefualtLocale) {
+		if (CollectionUtils.isEmpty(currentVersionControls))
+			return new HashMap<>();
+		currentVersionControls.keySet().forEach(control -> {
+			if (refVersionControls.has(control))
+				currentVersionControls.put(control, refVersionControls.getString(control));
+			else
+				currentVersionControls.put(control, isDefualtLocale ? currentVersionControls.get(control) : control);
+		});
+		return currentVersionControls;
 	}
 
 	private boolean isEmpty(FormTranslation formTranslation) {
@@ -181,6 +195,27 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 		return new ArrayList<>(translations);
 	}
 
+	private String getFileName(String formUuid) {
+		String fromTranslationsPath = Context.getAdministrationService()
+				.getGlobalProperty("bahmni.formTranslations.directory", DEFAULT_FORM_TRANSLATIONS_PATH);
+		return String.format("%s/%s.json", fromTranslationsPath, formUuid);
+	}
+
+	private File translationFileFor(String formName, String formVersion, String formUuid) {
+		File file = null;
+		if (isNotEmpty(formUuid))
+			file = new File(getFileName(formUuid));
+		if (file == null || !file.exists()) {
+			file = new File(getFileName(formName, formVersion));
+		}
+        if (file == null || !file.exists()) {
+            String normalizedFileName = BahmniFormUtils.normalizeFileName(formName);
+            file = new File(getFileName(normalizedFileName, formVersion));
+        }
+		return file;
+	}
+
+
 	private String getFileName(String formName, String version) {
 		String fromTranslationsPath = Context.getAdministrationService()
 				.getGlobalProperty("bahmni.formTranslations.directory", DEFAULT_FORM_TRANSLATIONS_PATH);
@@ -206,12 +241,13 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 
 	private boolean validate(FormTranslation formTranslation) {
 		return isNotEmpty(formTranslation.getFormName()) &&
+				isNotEmpty(formTranslation.getFormUuid()) &&
 				isNotEmpty(formTranslation.getLocale()) &&
 				isNotEmpty(formTranslation.getVersion());
 	}
 
-	private List<FormTranslation> mapTranslations(String locale, String formName, String formVersion) {
-		JSONObject jsonObject = getTranslationJsonFromFile(formName, formVersion);
+	private List<FormTranslation> translationsFor(String locale, String formName, String formVersion, String formUuid) {
+		JSONObject jsonObject = getTranslationJsonFromFile(formName, formVersion, formUuid);
 		List<FormTranslation> translationsList = new ArrayList<>();
 		if (isNotEmpty(locale))
 			translationsList.add(getParsedTranslations(jsonObject, locale, formName, formVersion));
@@ -229,19 +265,14 @@ public class BahmniFormTranslationServiceImpl extends BaseOpenmrsService impleme
 		return formTranslation;
 	}
 
-	private JSONObject getTranslationJsonFromFile(String formName, String formVersion) {
-		File translationFile;
-		translationFile= new File(getFileName(formName, formVersion));
-		if (!translationFile.exists()){
-			String translatedFileName = BahmniFormUtils.normalizeFileName(formName);
-			translationFile = new File(getFileName(translatedFileName, formVersion));
-			if(!translationFile.exists())
-				throw new APIException(String.format("Unable to find translation file for %s_v%s", formName, formVersion));
-		}
-		return getTranslations(translationFile);
+	private JSONObject getTranslationJsonFromFile(String formName, String formVersion, String formUuid) {
+		File translationFile = translationFileFor(formName, formVersion, formUuid);
+		if (!translationFile.exists())
+			throw new APIException(String.format("Unable to find translation file for %s_v%s", formName, formVersion));
+		return existingTranslationsFrom(translationFile);
 	}
 
-	private JSONObject getTranslations(File translationFile) {
+	private JSONObject existingTranslationsFrom(File translationFile) {
 		String fileContent;
 		try {
 			fileContent = translationFile.exists() ? FileUtils.readFileToString(translationFile, "UTF-8") : "";

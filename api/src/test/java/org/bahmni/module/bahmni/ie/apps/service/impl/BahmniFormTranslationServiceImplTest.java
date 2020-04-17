@@ -2,6 +2,8 @@ package org.bahmni.module.bahmni.ie.apps.service.impl;
 
 import org.apache.commons.io.FileUtils;
 import org.bahmni.module.bahmni.ie.apps.validator.BahmniFormUtils;
+import org.bahmni.module.bahmni.ie.apps.service.impl.BahmniFormTranslationServiceImpl;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,18 +65,37 @@ public class BahmniFormTranslationServiceImplTest {
 	}
 
 	@Test
-	public void shouldFetchTranslationsForGivenLocale() throws Exception {
+	public void shouldFetchTranslationsForGivenLocaleWhenTranslationFileNameIsFormName() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-		FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
-		bahmniFormTranslationService
-				.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
+						+
+						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 
-		List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "fr");
+		List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "fr", "form_uuid");
 		assertEquals(1, formTranslations.size());
 		assertEquals("fr", formTranslations.get(0).getLocale());
-		formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "en");
+		formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "en", "form_uuid");
+		assertEquals(1, formTranslations.size());
+		assertEquals("en", formTranslations.get(0).getLocale());
+	}
+
+	@Test
+	public void shouldFetchTranslationsForGivenLocaleWhenTranslationFileNameIsFormUUID() throws Exception {
+		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+		String translationFilePath = createTempFolder() + "/form_uuid.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
+						+
+						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
+
+		List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "fr", "form_uuid");
+		assertEquals(1, formTranslations.size());
+		assertEquals("fr", formTranslations.get(0).getLocale());
+		formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", "en", "form_uuid");
 		assertEquals(1, formTranslations.size());
 		assertEquals("en", formTranslations.get(0).getLocale());
 	}
@@ -82,63 +103,48 @@ public class BahmniFormTranslationServiceImplTest {
 	@Test
 	public void shouldFetchAllTranslationsIfNoLocaleGiven() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-		FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
-		bahmniFormTranslationService
-				.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
+						+
+						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 
-		List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", null);
+		List<FormTranslation> formTranslations = bahmniFormTranslationService.getFormTranslations("test_form", "1", null, "form_uuid");
 		assertEquals(2, formTranslations.size());
 	}
 
 	@Test
-	public void shouldThrowAPIExceptionIfTranslationFileIsNotPresentForGivenFormNameAndVersion() throws Exception {
+	public void shouldThrowAPIExceptionIfTranslationFileIsNotPresentForGivenFormNameAndVersionOrFormUUID() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
 		setTranslationPath("/var/www/blah/blah");
 		expectedException.expect(APIException.class);
 		expectedException.expectMessage("Unable to find translation file for test_form_v1");
-		bahmniFormTranslationService.getFormTranslations("test_form", "1", "en");
+		bahmniFormTranslationService.getFormTranslations("test_form", "1", "en", "form_uuid");
 	}
 
 	@Test
 	public void shouldSaveTranslationsOfGivenForm() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
 		String tempTranslationsPath = createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-		FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en",  "test_form");
+		FormTranslation formTranslationFr = createFormTranslation("fr", "test_form");
 		bahmniFormTranslationService
 				.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
 		String expected =
 				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}},"
 						+
 						"\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_1.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form.json");
 		assertTrue(translationFile.exists());
 		assertEquals(FileUtils.readFileToString(translationFile), expected);
 	}
 
 	@Test
-	public void shouldSaveTranslationsOfGivenFormWithNormalizedFormName() throws Exception {
-		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		String tempTranslationsPath = createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_fòrm_spécíal");
-		FormTranslation formTranslationFr = createFormTranslation("fr", "1", "test_fòrm_spécíal");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn, formTranslationFr)));
-		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}," +
-				"\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_f_rm_sp_c_al_1.json");
-		assertTrue(translationFile.exists());
-		assertEquals(FileUtils.readFileToString(translationFile), expected);
-	}
-
-	@Test
-	public void shouldThrowAPIExceptionIfFormNameIsNotPresent() throws Exception {
+	public void shouldThrowAPIExceptionIfFormUUIDIsNotPresentDuringSave() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
 		createTempFolder();
-		PowerMockito.mockStatic(BahmniFormUtils.class);
-		PowerMockito.when(BahmniFormUtils.normalizeFileName(null)).thenReturn(null);
-		FormTranslation formTranslation = createFormTranslation("en", "1", null);
+		FormTranslation formTranslation = createFormTranslation("en", null);
 		expectedException.expect(APIException.class);
 		expectedException.expectMessage("Invalid Parameters");
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
@@ -147,43 +153,63 @@ public class BahmniFormTranslationServiceImplTest {
 	@Test
 	public void shouldThrowAPIExceptionIfItUnableToSaveTranslations() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		FormTranslation formTranslation = createFormTranslation("en", "1", "test_form");
+		FormTranslation formTranslation = createFormTranslation("en",  "test_form");
 		setTranslationPath("/var/www/blah/blah");
 		expectedException.expect(APIException.class);
-		expectedException.expectMessage("/test_form_1.json' could not be created");
+		expectedException.expectMessage("/test_form.json' could not be created");
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
 	}
 
-	@Test
-	public void shouldThrowAPIExceptionIfFormVersionIsNotPresent() throws Exception {
-		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslation = createFormTranslation("en", null, "test_form");
-		expectedException.expect(APIException.class);
-		expectedException.expectMessage("Invalid Parameters");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
-	}
 
 	@Test
 	public void shouldThrowAPIExceptionIfLocaleIsNotPresent() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
 		createTempFolder();
-		FormTranslation formTranslation = createFormTranslation(null, "1", "test_form");
+		FormTranslation formTranslation = createFormTranslation(null, "test_form");
 		expectedException.expect(APIException.class);
 		expectedException.expectMessage("Invalid Parameters");
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslation)));
 	}
 
 	@Test
-	public void shouldGenerateTranslationsForGivenLocale() throws Exception {
+	public void shouldGenerateTranslationsForGivenLocaleWithTranslationFileNameAsFromName() throws Exception {
 		setupConceptMocks("en");
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("fr", "test_form", "1");
+				.setNewTranslationsForForm("fr", "test_form", "1", "formUuid");
+
+		assertEquals("fr", formFieldTranslations.getLocale());
+		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
+
+		assertEquals(2, conceptsWithAllName.values().size());
+		assertEquals(3, conceptsWithAllName.get("TEMPERATURE_1").size());
+		assertTrue(conceptsWithAllName.get("TEMPERATURE_1")
+				.containsAll(Arrays.asList("Temperature fr", "Temp short", "TEMPERATURE")));
+		assertFalse(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE DATA"));
+		assertEquals(new ArrayList<>(Collections.singletonList("LABEL_2")),
+				formFieldTranslations.getLabels().get("LABEL_2"));
+		assertEquals("Temperature desc", conceptsWithAllName.get("TEMPERATURE_1_DESC").get(0));
+		assertEquals(1, conceptsWithAllName.get("TEMPERATURE_1_DESC").size());
+	}
+
+	@Test
+	public void shouldGenerateTranslationsForGivenLocaleWithTranslationFileNameAsFromUuid() throws Exception {
+		setupConceptMocks("en");
+		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+		String translationFilePath = createTempFolder() + "/formUuid.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
+		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
+				.setNewTranslationsForForm("fr", "test_form", "1", "formUuid");
 
 		assertEquals("fr", formFieldTranslations.getLocale());
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
@@ -203,12 +229,15 @@ public class BahmniFormTranslationServiceImplTest {
 	public void shouldPutTranslationKeysAsTranslatedValueIfNoTranslationAvailableForGivenLocale() throws Exception {
 		setupConceptMocks("en");
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("es", "test_form", "1");
+				.setNewTranslationsForForm("es", "test_form", "1", "formUuid");
 
 		assertEquals("es", formFieldTranslations.getLocale());
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
@@ -226,12 +255,15 @@ public class BahmniFormTranslationServiceImplTest {
 	public void shouldAddTranslationsForDefaultLocale() throws Exception {
 		setupConceptMocks("fr");
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("fr", "test_form", "1");
+				.setNewTranslationsForForm("fr", "test_form", "1", "formUuid");
 
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
@@ -251,14 +283,14 @@ public class BahmniFormTranslationServiceImplTest {
 	public void shouldAddAlreadySavedTranslationsForGivenLocale() throws Exception {
 		setupConceptMocks("en");
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
-		((HashMap) formTranslationEn.getConcepts()).put("TEMPERATURE_1", "Translated Temperature");
-		System.out.println(formTranslationEn);
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Translated Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("fr", "test_form", "1");
+				.setNewTranslationsForForm("fr", "test_form", "1", "formUuid");
 
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
@@ -279,14 +311,14 @@ public class BahmniFormTranslationServiceImplTest {
 	public void shouldAddAlreadySavedTranslationsForDefaultLocale() throws Exception {
 		setupConceptMocks("fr");
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("fr", "1", "test_form");
-		//        ((HashMap) formTranslationEn.getConcepts()).put("TEMPERATURE_1", "Translated Temperature");
-		System.out.println(formTranslationEn);
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("fr", "test_form", "1");
+				.setNewTranslationsForForm("fr", "test_form", "1", "formUuid");
 
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
@@ -307,12 +339,15 @@ public class BahmniFormTranslationServiceImplTest {
 	public void shouldNotAddKeysAsValueForConceptIfAtLeastOneTranslationForConceptNameFound() throws Exception {
 		setupConceptMocks("pt");
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("pt", "1", "test_form");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"pt\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("pt", "test_form", "1");
+				.setNewTranslationsForForm("pt", "test_form", "1", "formUuid");
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
 		assertEquals("pt", formFieldTranslations.getLocale());
@@ -332,19 +367,22 @@ public class BahmniFormTranslationServiceImplTest {
 		setupConceptMocks("en");
 		when(conceptService.getConceptsByName("TEMPERATURE")).thenReturn(new ArrayList<>());
 		BahmniFormTranslationServiceImpl bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "1", "test_form");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Collections.singletonList(formTranslationEn)));
+		String translationFilePath = createTempFolder() + "/test_form_1.json";
+		String translationJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"" +
+						"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+
+		FileUtils.writeStringToFile(new File(translationFilePath), translationJson);
 
 		FormFieldTranslations formFieldTranslations = bahmniFormTranslationService
-				.setNewTranslationsForForm("fr", "test_form", "1");
+				.setNewTranslationsForForm("fr", "test_form", "1", "formUuid");
 		Map<String, ArrayList<String>> conceptsWithAllName = formFieldTranslations.getConcepts();
 
 		assertTrue(conceptsWithAllName.get("TEMPERATURE_1").contains("TEMPERATURE_1"));
 	}
 
 	@Test
-	public void shouldPersistOldVersionLocaleTranslationsToNewVersion() throws Exception {
+	public void shouldPersistOldVersionLocaleTranslationsToNewVersionWhenOldVersionTranslationFileNameIsFormName() throws Exception {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
 		String tempTranslationsPath = createTempFolder();
 
@@ -355,7 +393,7 @@ public class BahmniFormTranslationServiceImplTest {
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
 
-		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form_uuid", "test_form" );
 		formTranslationEn.setReferenceVersion("1");
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
 
@@ -363,7 +401,57 @@ public class BahmniFormTranslationServiceImplTest {
 				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
 						+
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_2.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid.json");
+		assertTrue(translationFile.exists());
+		assertEquals(FileUtils.readFileToString(translationFile), expected);
+	}
+
+	@Test
+	public void shouldPersistOldVersionLocaleTranslationsToNewVersionWhenOldVersionTranslationFileNameIsFormUUID() throws Exception {
+		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+		String tempTranslationsPath = createTempFolder();
+
+		String referenceFormUuid = "prev-uuid";
+		String prevVersionTranslationsPath = tempTranslationsPath + "/" + referenceFormUuid + ".json";
+		String prevVersionJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
+						+
+						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
+
+		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form_uuid", "test_form");
+		formTranslationEn.setReferenceVersion("1");
+		formTranslationEn.setReferenceFormUuid(referenceFormUuid);
+		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
+
+		String expected =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
+						+
+						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid.json");
+		assertTrue(translationFile.exists());
+		assertEquals(FileUtils.readFileToString(translationFile), expected);
+	}
+
+	@Test
+	public void shouldReturnTranslationsInNewVersionWhenTheReferenceFormTranslationFileIsNotFound() throws Exception {
+		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
+		String tempTranslationsPath = createTempFolder();
+
+		String referenceFormUuid = "prev-uuid";
+		String prevVersionTranslationsPath = tempTranslationsPath + "/" + referenceFormUuid + "_not_found.json";
+		String prevVersionJson =
+				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
+						+
+						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
+
+		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form_uuid", "test_form");
+		formTranslationEn.setReferenceVersion("1");
+		formTranslationEn.setReferenceFormUuid(referenceFormUuid);
+		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
+		String expected ="{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid.json");
 		assertTrue(translationFile.exists());
 		assertEquals(FileUtils.readFileToString(translationFile), expected);
 	}
@@ -379,53 +467,13 @@ public class BahmniFormTranslationServiceImplTest {
 						+
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
-		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form_uuid", "test_form");
 		formTranslationEn.setReferenceVersion("1");
 		formTranslationEn.getConcepts().remove("TEMPERATURE_1_DESC");
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
 		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}" +
 				",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_2.json");
-		assertTrue(translationFile.exists());
-		assertEquals(FileUtils.readFileToString(translationFile), expected);
-	}
-
-	@Test
-	public void shouldPersistOldVersionLocaleTranslationsToNewVersionWithNormalizedName() throws Exception {
-		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		String tempTranslationsPath = createTempFolder();
-
-		String prevVersionTranslationsPath = tempTranslationsPath + "/test_f_rm_sp_c_al_1.json";
-		String prevVersionJson = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}" +
-				",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
-		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_fòrm_spécíal");
-		formTranslationEn.setReferenceVersion("1");
-		formTranslationEn.getConcepts().remove("TEMPERATURE_1_DESC");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
-		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}" +
-				",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_f_rm_sp_c_al_2.json");
-		assertTrue(translationFile.exists());
-		assertEquals(FileUtils.readFileToString(translationFile), expected);
-	}
-
-	@Test
-	public void shouldPersistApplicableOldVersionLocaleTranslationsWithoutNormalizedNameToNewVersionWithNormalisedTranslationName() throws Exception {
-		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		String tempTranslationsPath = createTempFolder();
-
-		String prevVersionTranslationsPathWithoutNormalizedName = tempTranslationsPath + "/test_fòrm_spécíal_1.json";
-		String prevVersionJson = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}" +
-				",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		FileUtils.writeStringToFile(new File(prevVersionTranslationsPathWithoutNormalizedName), prevVersionJson);
-		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_fòrm_spécíal");
-		formTranslationEn.setReferenceVersion("1");
-		formTranslationEn.getConcepts().remove("TEMPERATURE_1_DESC");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
-		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}" +
-				",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_f_rm_sp_c_al_2.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid.json");
 		assertTrue(translationFile.exists());
 		assertEquals(FileUtils.readFileToString(translationFile), expected);
 	}
@@ -439,7 +487,7 @@ public class BahmniFormTranslationServiceImplTest {
 		String prevVersionJson = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
 
-		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "test_form");
 		formTranslationEn.setReferenceVersion("1");
 		formTranslationEn.getConcepts().remove("TEMPERATURE_1_DESC");
 		formTranslationEn.getConcepts().remove("TEMPERATURE_1");
@@ -448,7 +496,7 @@ public class BahmniFormTranslationServiceImplTest {
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
 
 		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_2_DESC\":\"Temperature\",\"TEMPERATURE_3_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_2.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form.json");
 		assertTrue(translationFile.exists());
 		assertEquals(FileUtils.readFileToString(translationFile), expected);
 	}
@@ -465,7 +513,7 @@ public class BahmniFormTranslationServiceImplTest {
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
 
-		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "2", "test_form_uuid", "test_form");
 		formTranslationEn.setReferenceVersion("1");
 		formTranslationEn.getConcepts().remove("TEMPERATURE_1_DESC");
 		formTranslationEn.getConcepts().put("TEMPERATURE_2_DESC", "Temperature");
@@ -476,7 +524,7 @@ public class BahmniFormTranslationServiceImplTest {
 				"{\"en\":{\"concepts\":{\"TEMPERATURE_2_DESC\":\"Temperature\",\"TEMPERATURE_3_DESC\":\"Temperature\",\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
 						+
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_2_DESC\":\"TEMPERATURE_2_DESC\",\"TEMPERATURE_3_DESC\":\"TEMPERATURE_3_DESC\",\"TEMPERATURE_1\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_2.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid.json");
 		assertTrue(translationFile.exists());
 		assertEquals(expected, FileUtils.readFileToString(translationFile));
 	}
@@ -493,7 +541,7 @@ public class BahmniFormTranslationServiceImplTest {
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(oldVersionTranslationsPath), oldVersionJson);
 
-		FormTranslation formTranslationEn = createFormTranslation("en", "5", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "5", "test_form_uuid_5", "test_form");
 		formTranslationEn.setReferenceVersion("2");
 		formTranslationEn.getConcepts().remove("TEMPERATURE_1_DESC");
 		formTranslationEn.getConcepts().remove("TEMPERATURE_1");
@@ -509,7 +557,7 @@ public class BahmniFormTranslationServiceImplTest {
 				"{\"en\":{\"concepts\":{\"TEMPERATURE_2_DESC\":\"Temperature\",\"TEMPERATURE_3_DESC\":\"Temperature\"},\"labels\":{\"LABEL_1\":\"Blood\"}}"
 						+
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_2_DESC\":\"TEMPERATURE_2_DESC\",\"TEMPERATURE_3_DESC\":\"TEMPERATURE_3_DESC\"},\"labels\":{\"LABEL_1\":\"LABEL_1\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_5.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid_5.json");
 		assertTrue(translationFile.exists());
 		assertEquals(expected, FileUtils.readFileToString(translationFile));
 	}
@@ -520,21 +568,21 @@ public class BahmniFormTranslationServiceImplTest {
 		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
 		String tempTranslationsPath = createTempFolder();
 
-		String prevVersionTranslationsPath = tempTranslationsPath + "/test_form_2.json";
+		String prevVersionTranslationsPath = tempTranslationsPath + "/form_name_2.json";
 		String prevVersionJson =
 				"{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}"
 						+
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
 
-		FormTranslation formTranslationEn = createFormTranslation("en", "3", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "3", "test_form_uuid","form_name");
 		formTranslationEn.setReferenceVersion("2");
 		formTranslationEn.setConcepts(null);
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
 
 		String expected = "{\"en\":{\"concepts\":{},\"labels\":{\"LABEL_2\":\"Vitals\"}}" +
 				",\"fr\":{\"concepts\":{},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_3.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form_uuid.json");
 		assertTrue(translationFile.exists());
 		assertEquals(expected, FileUtils.readFileToString(translationFile));
 	}
@@ -549,27 +597,14 @@ public class BahmniFormTranslationServiceImplTest {
 		String prevVersionJson = "{}";
 		FileUtils.writeStringToFile(new File(prevVersionTranslationsPath), prevVersionJson);
 
-		FormTranslation formTranslationEn = createFormTranslation("en", "3", "test_form");
+		FormTranslation formTranslationEn = createFormTranslation("en", "test_form");
 		formTranslationEn.setReferenceVersion("2");
 		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
 
 		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_3.json");
+		File translationFile = new File(tempTranslationsPath + "/test_form.json");
 		assertTrue(translationFile.exists());
 		assertEquals(expected, FileUtils.readFileToString(translationFile));
-	}
-
-	@Test
-	public void shouldSaveTranslationsWhenVersionIsZero() throws IllegalAccessException, NoSuchFieldException, IOException {
-		BahmniFormTranslationService bahmniFormTranslationService = new BahmniFormTranslationServiceImpl();
-		String tempTranslationsPath = createTempFolder();
-		FormTranslation formTranslationEn = createFormTranslation("en", "0", "test_form");
-		formTranslationEn.setReferenceVersion("3");
-		bahmniFormTranslationService.saveFormTranslation(new ArrayList<>(Arrays.asList(formTranslationEn)));
-		String expected = "{\"en\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
-		File translationFile = new File(tempTranslationsPath + "/test_form_0.json");
-		assertTrue(translationFile.exists());
-		assertEquals(FileUtils.readFileToString(translationFile), expected);
 	}
 
 	@Test
@@ -584,7 +619,7 @@ public class BahmniFormTranslationServiceImplTest {
 						",\"fr\":{\"concepts\":{\"TEMPERATURE_1\":\"Temperature\",\"TEMPERATURE_1_DESC\":\"Temperature\"},\"labels\":{\"LABEL_2\":\"Vitals\"}}}";
 		FileUtils.writeStringToFile(new File(importedTranslationsPath), importedTranslationsJson);
 
-		FormTranslation defaultFormTranslations = createFormTranslation("en", "1", "test_form");
+		FormTranslation defaultFormTranslations = createFormTranslation("en", "test_form");
 		defaultFormTranslations.setReferenceVersion("1");
 		HashMap<String, String> concepts = new HashMap<>();
 		concepts.put("TEMPERATURE_1", "Some Default");
